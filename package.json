@@ -6,7 +6,7 @@
     "build": "turbo build",
     "test": "turbo test",
     "lint": "turbo lint",
-    "start": "cd packages/core && pnpm start"
+    "start": "pnpm --filter @astrolabe/core start"
   },
   "devDependencies": {
     "turbo": "^2.0.0",

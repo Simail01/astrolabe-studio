@@ -5,3 +5,4 @@ out/
 *.log
 temp/
 .superpowers/
+.turbo/

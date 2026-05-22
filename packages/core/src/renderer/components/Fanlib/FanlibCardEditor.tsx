@@ -22,8 +22,35 @@ export const FanlibCardEditor: React.FC = () => {
   const [editPersonality, setEditPersonality] = useState('');
   const [editAppearance, setEditAppearance] = useState('');
   const [editBackground, setEditBackground] = useState('');
+  const [genPrompt, setGenPrompt] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [genError, setGenError] = useState('');
 
   if (!card) return <div style={placeholder}>选择一张卡片查看详情</div>;
+
+  const handleGenerateImage = async () => {
+    if (!workspace) return;
+    setGenerating(true);
+    setGenError('');
+    try {
+      const model = await bridge.getAIKey('volcengine-image-model') || 'doubao-seedream-5-0-260128';
+      const basePrompt = card.type === 'character'
+        ? `角色设定图，全身像，正面站立，白色背景，高细节，动漫风格。名称：${card.name}。外貌：${(card as CharacterCard).appearance || ''}。性格：${(card as CharacterCard).personality || ''}。服饰特征：${(card as CharacterCard).background || ''}`
+        : `设定图，${card.name}`;
+      const prompt = genPrompt || basePrompt;
+      const urls = await bridge.generateImage({ model, prompt, size: '2K' }) as string[];
+      if (urls.length > 0) {
+        const updated = { ...card, designImages: [...((card as any).designImages || []), ...urls], updatedAt: new Date().toISOString() };
+        await bridge.fanlibSave(workspace.path, updated as any);
+        useFanlibStore.getState().addOrUpdateCard(updated as any);
+        setGenPrompt('');
+      }
+    } catch (e) {
+      setGenError((e as Error).message || '生成失败');
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!workspace) return;
@@ -133,6 +160,44 @@ export const FanlibCardEditor: React.FC = () => {
           <div style={field}><div style={fieldLabel}>历史</div><div style={{ ...fieldValue, whiteSpace: 'pre-wrap' }}>{(card as FactionCard).history || '—'}</div></div>
         </>
       )}
+
+      {/* Design Images Section */}
+      <div style={{ ...field, borderTop: '1px solid #3c3c3c', paddingTop: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <div style={fieldLabel}>设定图</div>
+        </div>
+        {(card as any).designImages?.length > 0 ? (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {(card as any).designImages.map((url: string, i: number) => (
+              <img key={i} src={url} alt={`${card.name} 设定图 ${i + 1}`}
+                style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 4, border: '1px solid #444' }}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+            ))}
+          </div>
+        ) : (
+          <div style={{ color: '#666', fontSize: 12 }}>暂无设定图</div>
+        )}
+        <div style={{ marginTop: 8 }}>
+          <input
+            value={genPrompt}
+            onChange={e => setGenPrompt(e.target.value)}
+            placeholder="自定义 prompt（可选，留空则自动生成）"
+            style={{ ...editInput, marginBottom: 6 }}
+          />
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button
+              onClick={handleGenerateImage}
+              disabled={generating}
+              style={{ padding: '4px 12px', fontSize: 12, backgroundColor: generating ? '#3c3c3c' : '#5a3e00', color: generating ? '#888' : '#dcdcaa', border: 'none', borderRadius: 3, cursor: generating ? 'not-allowed' : 'pointer' }}
+            >
+              {generating ? '生成中...' : 'AI 生成设定图'}
+            </button>
+            {genError && <span style={{ color: '#f44747', fontSize: 12 }}>{genError}</span>}
+          </div>
+          <div style={{ color: '#666', fontSize: 10, marginTop: 4 }}>需在设置中配置火山方舟 API Key 和图像模型接入点</div>
+        </div>
+      </div>
     </div>
   );
 };

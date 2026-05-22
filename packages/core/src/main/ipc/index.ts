@@ -7,6 +7,7 @@ import { registerWikiHandlers } from './wiki';
 import { registerFanlibHandlers } from './fanlib';
 import { registerDesignHandlers } from './design';
 import { registerPipelineHandlers } from './pipeline';
+import { registerStoryboardHandlers } from './storyboard';
 import { registerDialogHandlers } from './dialog';
 import { registerWorkspaceHandlers } from './workspace';
 
@@ -20,6 +21,7 @@ export function registerAllHandlers(): void {
   registerFanlibHandlers();
   registerDesignHandlers();
   registerPipelineHandlers();
+  registerStoryboardHandlers();
   registerDialogHandlers();
   registerWorkspaceHandlers();
 }

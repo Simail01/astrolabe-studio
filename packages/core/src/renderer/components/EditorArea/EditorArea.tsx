@@ -3,6 +3,7 @@ import { GridSplit } from './GridSplit';
 import { useLayoutStore } from '../../stores/layout.store';
 import { OutlineEditor } from '../Outline/OutlineEditor';
 import { ChapterEditor } from '../Editor/ChapterEditor';
+import { StoryboardViewer } from '../Pipeline/StoryboardViewer';
 
 const wrapper: React.CSSProperties = {
   display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden',
@@ -18,7 +19,7 @@ export const EditorArea: React.FC = () => {
         <ChapterEditor />
         {panelLayout.grid === '2x2' && (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666', fontSize: 14 }}>面板 3</div>
+            <StoryboardViewer />
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666', fontSize: 14 }}>面板 4</div>
           </>
         )}

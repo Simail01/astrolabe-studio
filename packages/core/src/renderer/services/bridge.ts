@@ -81,4 +81,5 @@ export const bridge = {
   pipelineGetStoryboard: (projectPath: string, chapterId: string) => api.invoke('pipeline:getStoryboard', projectPath, chapterId) as Promise<unknown>,
   pipelineSaveState: (projectPath: string, state: unknown) => api.invoke('pipeline:saveState', projectPath, state) as Promise<void>,
   pipelineGetState: (projectPath: string) => api.invoke('pipeline:getState', projectPath) as Promise<unknown>,
+  storyboardDecompose: (projectPath: string, chapterId: string) => api.invoke('storyboard:decompose', projectPath, chapterId) as Promise<unknown[]>,
 };

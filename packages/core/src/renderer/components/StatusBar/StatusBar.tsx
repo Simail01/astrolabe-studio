@@ -14,11 +14,14 @@ const bar: React.CSSProperties = {
 
 export const StatusBar: React.FC = () => {
   const workspace = useWorkspaceStore((s) => s.workspace);
-  const projectName = workspace?.name ?? '未打开项目';
+  const activeProject = useWorkspaceStore((s) => s.activeProject);
+  const label = activeProject
+    ? `${workspace?.name ?? ''} / ${activeProject}`
+    : workspace?.name ?? '未打开项目';
 
   return (
     <div style={bar}>
-      <span>项目: {projectName}</span>
+      <span>{label}</span>
       <span>AI: 就绪</span>
     </div>
   );

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useOutlineStore } from '../../stores/outline.store';
+import { useWorkspaceStore } from '../../stores/workspace.store';
 import { bridge } from '../../services/bridge';
-import type { OutlineNode } from '@astrolabe/shared';
+import type { OutlineNode, Outline } from '@astrolabe/shared';
 
 const container: React.CSSProperties = {
   color: '#ccc', fontSize: 13, height: '100%', overflow: 'auto', padding: 4,
@@ -108,11 +109,35 @@ interface Props {
 export const OutlineEditor: React.FC<Props> = ({ projectPath }) => {
   const outline = useOutlineStore((s) => s.outline);
   const setOutline = useOutlineStore((s) => s.setOutline);
+  const getProjectPath = useWorkspaceStore((s) => s.getProjectPath);
   const [aiPrompt, setAiPrompt] = useState('');
   const [showPromptInput, setShowPromptInput] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState('');
   const [genSuccess, setGenSuccess] = useState(false);
+
+  // Auto-save outline when it changes (debounced)
+  const outlineRef = useRef(outline);
+  outlineRef.current = outline;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const current = outlineRef.current;
+      const projectPath = getProjectPath();
+      if (!current || !current.nodes.length || !projectPath) return;
+      const outlineData: Outline = {
+        id: current.id,
+        title: current.title || '',
+        premise: current.premise || '',
+        genre: current.genre || [],
+        nodes: current.nodes,
+        createdAt: current.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        history: current.history || [],
+      };
+      bridge.pipelineSaveOutline(projectPath, outlineData).catch(() => {});
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [outline]);
 
   const ensureOutline = () => {
     const current = useOutlineStore.getState().outline;

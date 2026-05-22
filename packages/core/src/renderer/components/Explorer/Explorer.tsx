@@ -21,7 +21,15 @@ const fileIcon: React.CSSProperties = { fontSize: 14 };
 export const Explorer: React.FC = () => {
   const sidebarVisible = useLayoutStore((s) => s.sidebarVisible);
   const workspace = useWorkspaceStore((s) => s.workspace);
+  const activeProject = useWorkspaceStore((s) => s.activeProject);
+  const setActiveProject = useWorkspaceStore((s) => s.setActiveProject);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+
+  const activeProjectStyle: React.CSSProperties = {
+    ...projectItem,
+    backgroundColor: '#094771',
+    color: '#fff',
+  };
 
   if (!sidebarVisible) return null;
 
@@ -42,8 +50,8 @@ export const Explorer: React.FC = () => {
       <div style={list}>
         {workspace && workspace.projects.length > 0 ? (
           workspace.projects.map((name) => (
-            <div key={name} style={projectItem}>
-              <span style={fileIcon}>📄</span>
+            <div key={name} style={name === activeProject ? activeProjectStyle : projectItem} onClick={() => setActiveProject(name)}>
+              <span style={fileIcon}>{name === activeProject ? '📂' : '📄'}</span>
               {name}
             </div>
           ))
@@ -64,6 +72,7 @@ export const Explorer: React.FC = () => {
                 ...ws,
                 projects: [...ws.projects, project.title],
               });
+              setActiveProject(project.title);
             }
           }}
         />

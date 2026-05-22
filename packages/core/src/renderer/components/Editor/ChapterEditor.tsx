@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { useChapterStore } from '../../stores/chapter.store';
 import { useOutlineStore } from '../../stores/outline.store';
+import { useWorkspaceStore } from '../../stores/workspace.store';
 import { bridge } from '../../services/bridge';
-import type { OutlineNode } from '@astrolabe/shared';
+import type { OutlineNode, Chapter } from '@astrolabe/shared';
 
 const container: React.CSSProperties = {
   display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#1e1e1e',
@@ -29,13 +30,57 @@ interface Props {
 }
 
 export const ChapterEditor: React.FC<Props> = () => {
-  const { currentChapter, content, wordCount, isDirty, setContent } = useChapterStore();
+  const { currentChapter, content, wordCount, isDirty, setContent, markClean } = useChapterStore();
   const selectedNodeId = useOutlineStore((s) => s.selectedNodeId);
   const outline = useOutlineStore((s) => s.outline);
+  const getProjectPath = useWorkspaceStore((s) => s.getProjectPath);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle');
 
   const selectedNode = outline?.nodes ? findNode(outline.nodes, selectedNodeId) : null;
+
+  // Auto-save: 2 seconds after user stops typing
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const doSave = useCallback(async () => {
+    const projectPath = getProjectPath();
+    if (!projectPath || !isDirty) return;
+    setSaveStatus('saving');
+    try {
+      const ch: Chapter = {
+        id: currentChapter?.id || `ch-${Date.now()}`,
+        title: currentChapter?.title || selectedNode?.title || '未命名',
+        content: useChapterStore.getState().content,
+        wordCount: useChapterStore.getState().wordCount,
+        order: currentChapter?.order || 0,
+        createdAt: currentChapter?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      await bridge.pipelineSaveChapter(projectPath, ch);
+      useChapterStore.getState().markClean();
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch {
+      setSaveStatus('idle');
+    }
+  }, [getProjectPath, currentChapter, selectedNode]);
+
+  // Watch content changes and debounce save
+  const prevContent = useRef(content);
+  useEffect(() => {
+    if (content !== prevContent.current && isDirty) {
+      prevContent.current = content;
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(doSave, 2000);
+    }
+    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
+  }, [content, isDirty, doSave]);
+
+  // Save on blur (when user clicks away)
+  const handleBlur = useCallback(() => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    doSave();
+  }, [doSave]);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setContent(e.target.value);
@@ -70,7 +115,9 @@ export const ChapterEditor: React.FC<Props> = () => {
       <div style={toolbar}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={title}>{displayTitle}</span>
-          {isDirty && <span style={{ fontSize: 11, color: '#d4a72c' }}>● 未保存</span>}
+          {saveStatus === 'saving' && <span style={{ fontSize: 11, color: '#dcdcaa' }}>◉ 保存中…</span>}
+          {saveStatus === 'saved' && <span style={{ fontSize: 11, color: '#4ec9b0' }}>✓ 已保存</span>}
+          {saveStatus === 'idle' && isDirty && <span style={{ fontSize: 11, color: '#d4a72c' }}>● 未保存</span>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={info}>{wordCount} 字</span>

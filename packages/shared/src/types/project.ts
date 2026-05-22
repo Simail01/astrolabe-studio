@@ -37,7 +37,13 @@ export interface Character {
 
 export interface Outline {
   id: string;
+  title: string;
+  premise: string;
+  genre: string[];
   nodes: OutlineNode[];
+  createdAt: string;
+  updatedAt: string;
+  history?: { id: string; timestamp: string; label: string }[];
 }
 
 export interface OutlineNode {

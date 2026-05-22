@@ -11,9 +11,9 @@ function getDeepSeekClient() {
   return createDeepSeekClient({ apiKey, model, baseUrl });
 }
 
-function getVolcEngineClient() {
-  const apiKey = aiKeyStore.getKey('volcengine');
-  if (!apiKey) throw new Error('火山方舟 API Key 未配置');
+function getVolcEngineClient(apiKeyOverride?: string) {
+  const apiKey = apiKeyOverride || aiKeyStore.getKey('volcengine');
+  if (!apiKey) throw new Error('火山方舟 API Key 未配置，请先在设置中填写并保存');
   const baseUrl = aiKeyStore.getKey('volcengine-baseurl') || undefined;
   return createVolcEngineClient({ apiKey, baseUrl });
 }
@@ -69,9 +69,9 @@ export function registerAIHandlers(): void {
     }
   });
 
-  ipcMain.handle('ai:volc:ping', async () => {
+  ipcMain.handle('ai:volc:ping', async (_event, apiKey?: string) => {
     try {
-      const client = getVolcEngineClient();
+      const client = getVolcEngineClient(apiKey);
       return await client.ping();
     } catch (e) {
       return { ok: false, error: (e as Error).message };

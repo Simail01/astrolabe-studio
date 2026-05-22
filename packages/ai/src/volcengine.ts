@@ -84,7 +84,7 @@ export function createVolcEngineClient(config: VolcEngineConfig) {
         await request('/images/generations', {
           model: 'doubao-seedream-5-0-260128',
           prompt: 'test',
-          size: '1024x1024',
+          size: '2K',
           sequential_image_generation: 'disabled',
           response_format: 'url',
           stream: false,

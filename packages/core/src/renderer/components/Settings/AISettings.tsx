@@ -144,7 +144,7 @@ export const AISettings: React.FC<Props> = ({ onSaved }) => {
     if (!volcKey) return;
     setVolcStatus('testing');
     try {
-      const result = await bridge.pingVolcEngine();
+      const result = await bridge.pingVolcEngine(volcKey);
       if (result.ok) {
         setVolcStatus('ok');
         setVolcStatusMsg('连接成功');

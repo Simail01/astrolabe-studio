@@ -8,39 +8,63 @@ const overlay: React.CSSProperties = {
   display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000,
 };
 const dialog: React.CSSProperties = {
-  width: 420, backgroundColor: '#252526', borderRadius: 6, padding: 20, boxShadow: '0 8px 32px rgba(0,0,0,0.5)', color: '#ccc',
+  width: 480, maxHeight: '80vh', overflow: 'auto', backgroundColor: '#252526', borderRadius: 8,
+  padding: 24, boxShadow: '0 8px 32px rgba(0,0,0,0.5)', color: '#ccc',
 };
-const title: React.CSSProperties = { fontSize: 16, color: '#fff', marginBottom: 16 };
+const title: React.CSSProperties = { fontSize: 18, color: '#fff', marginBottom: 12 };
+const subtitle: React.CSSProperties = { fontSize: 13, color: '#999', marginBottom: 16 };
 const btn: React.CSSProperties = { padding: '6px 16px', fontSize: 13, border: 'none', borderRadius: 4, cursor: 'pointer', marginRight: 8 };
 const btnPrimary: React.CSSProperties = { ...btn, backgroundColor: '#007acc', color: '#fff' };
 const btnSecondary: React.CSSProperties = { ...btn, backgroundColor: '#3c3c3c', color: '#ccc' };
+const btnAi: React.CSSProperties = { ...btn, backgroundColor: '#5a3e00', color: '#dcdcaa' };
+const adaptItem: React.CSSProperties = {
+  padding: '8px 12px', marginBottom: 6, backgroundColor: '#2d2d2d', borderRadius: 4, fontSize: 13,
+};
+const adaptField: React.CSSProperties = { color: '#dcdcaa', fontSize: 12, marginBottom: 2 };
+const adaptChange: React.CSSProperties = { color: '#ccc', fontSize: 13, marginBottom: 2 };
+const adaptReason: React.CSSProperties = { color: '#888', fontSize: 11, fontStyle: 'italic' };
+const loadingBar: React.CSSProperties = {
+  padding: '10px 16px', backgroundColor: '#094771', color: '#fff', fontSize: 13,
+  display: 'flex', alignItems: 'center', gap: 8, borderRadius: 4, marginBottom: 12,
+};
 
 export const ImportDialog: React.FC = () => {
   const { importDialogOpen, importCardId, cards, closeImportDialog } = useFanlibStore();
-  const getProjectPath = useWorkspaceStore((s) => s.getProjectPath);
-  const [importing, setImporting] = useState(false);
+  const workspace = useWorkspaceStore((s) => s.workspace);
+  const activeProject = useWorkspaceStore((s) => s.activeProject);
   const card = cards.find((c) => c.id === importCardId);
+  const [importing, setImporting] = useState(false);
+  const [adapting, setAdapting] = useState(false);
+  const [adaptations, setAdaptations] = useState<any[] | null>(null);
+  const [adaptedAttrs, setAdaptedAttrs] = useState<Record<string, string>>({});
 
   if (!importDialogOpen || !card) return null;
 
-  const handleImport = async () => {
-    const projectPath = getProjectPath();
+  const projectPath = workspace && activeProject ? `${workspace.path}/${activeProject}` : null;
+
+  const handleImport = async (useAdapted: boolean) => {
     if (!projectPath || !card) return;
     setImporting(true);
     try {
+      const attrs: Record<string, string> = { 来源: card.source?.title || '' };
+      if (useAdapted && adaptations) {
+        for (const a of adaptations) {
+          attrs[a.field] = adaptedAttrs[a.field] || a.adapted;
+        }
+      } else if (card.type === 'character') {
+        const c = card as any;
+        attrs['外貌'] = c.appearance || '';
+        attrs['性格'] = c.personality || '';
+        attrs['能力'] = (c.abilities || []).join('、');
+      }
       await bridge.wikiSave(projectPath, {
-        id: `wiki-char-${Date.now()}`,
+        id: `wiki-fanlib-${Date.now()}`,
         type: 'person',
-        title: card.name,
+        title: useAdapted && adaptedAttrs['名称'] ? adaptedAttrs['名称'] : card.name,
         aliases: card.aliases || [],
-        summary: (card as any).personality || '',
+        summary: useAdapted ? `平行宇宙改编自同人库卡片「${card.name}」` : (card as any).personality || '',
         content: (card as any).background || '',
-        attributes: card.type === 'character' ? {
-          外貌: (card as any).appearance || '',
-          性格: (card as any).personality || '',
-          能力: ((card as any).abilities || []).join('、'),
-          来源: card.source?.title || '',
-        } : {},
+        attributes: attrs,
         relations: [],
         sourceChapters: [],
         confidence: 1,
@@ -49,6 +73,8 @@ export const ImportDialog: React.FC = () => {
         confirmedByUser: true,
       });
       closeImportDialog();
+      setAdaptations(null);
+      setAdaptedAttrs({});
     } catch (e) {
       console.error('Import failed:', e);
     } finally {
@@ -56,17 +82,78 @@ export const ImportDialog: React.FC = () => {
     }
   };
 
+  const handleAdapt = async () => {
+    if (!workspace || !projectPath || !card) return;
+    setAdapting(true);
+    try {
+      const results = await bridge.fanlibAdapt(workspace.path, card.id, projectPath) as any[];
+      setAdaptations(results);
+      const attrs: Record<string, string> = {};
+      for (const r of results) {
+        attrs[r.field] = r.adapted;
+      }
+      setAdaptedAttrs(attrs);
+    } catch (e) {
+      console.error('Adaptation failed:', e);
+    } finally {
+      setAdapting(false);
+    }
+  };
+
   return (
     <div style={overlay} onClick={closeImportDialog}>
       <div style={dialog} onClick={(e) => e.stopPropagation()}>
-        <div style={title}>引入人物：{card.name}</div>
-        <div style={{ fontSize: 13, marginBottom: 16, color: '#999' }}>
-          此操作将基于同人库卡片 {card.name} 在当前作品中创建角色副本。
-          修改不会影响原卡片（平行宇宙模式）。
+        <div style={title}>
+          引入「{card.name}」
         </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <button style={btnSecondary} onClick={closeImportDialog}>取消</button>
-          <button style={btnPrimary} onClick={handleImport} disabled={importing}>{importing ? '引入中...' : '引入'}</button>
+        <div style={subtitle}>
+          来源：{card.source?.title || card.source?.type || '原创'}
+          {projectPath ? ` → 目标作品：${activeProject}` : ''}
+        </div>
+
+        {!projectPath && (
+          <div style={{ ...loadingBar, backgroundColor: '#5a1d1d' }}>
+            请先在左侧 Explorer 中选择一个作品
+          </div>
+        )}
+
+        {adapting && (
+          <div style={loadingBar}>
+            AI 正在分析世界观，生成平行宇宙改编…
+          </div>
+        )}
+
+        {adaptations && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 14, color: '#4ec9b0', marginBottom: 8, fontWeight: 600 }}>
+              AI 平行宇宙改编建议
+            </div>
+            {adaptations.map((a, i) => (
+              <div key={i} style={adaptItem}>
+                <div style={adaptField}>{a.field}</div>
+                <div style={adaptChange}>
+                  <span style={{ color: '#888', textDecoration: 'line-through' }}>{a.original}</span>
+                  {' → '}
+                  <span style={{ color: '#4ec9b0' }}>{adaptedAttrs[a.field] || a.adapted}</span>
+                </div>
+                <div style={adaptReason}>{a.reason}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+          <button style={btnSecondary} onClick={() => { closeImportDialog(); setAdaptations(null); setAdaptedAttrs({}); }}>取消</button>
+          {projectPath && !adaptations && (
+            <button style={btnAi} onClick={handleAdapt} disabled={adapting}>
+              AI 改编
+            </button>
+          )}
+          {projectPath && (
+            <button style={btnPrimary} onClick={() => handleImport(!!adaptations)} disabled={importing}>
+              {importing ? '引入中...' : adaptations ? '确认引入(改编版)' : '直接引入'}
+            </button>
+          )}
         </div>
       </div>
     </div>

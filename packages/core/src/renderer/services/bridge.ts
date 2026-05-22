@@ -64,6 +64,7 @@ export const bridge = {
   fanlibList: (workspacePath: string, type?: string) => api.invoke('fanlib:list', workspacePath, type) as Promise<unknown[]>,
   fanlibDelete: (workspacePath: string, type: string, id: string) => api.invoke('fanlib:delete', workspacePath, type, id) as Promise<void>,
   fanlibSearch: (workspacePath: string, query: string) => api.invoke('fanlib:search', workspacePath, query) as Promise<unknown[]>,
+  fanlibAdapt: (workspacePath: string, cardId: string, projectPath: string) => api.invoke('fanlib:adapt', workspacePath, cardId, projectPath) as Promise<unknown[]>,
 
   // Design
   designSave: (projectPath: string, characterId: string, design: unknown) => api.invoke('design:save', projectPath, characterId, design) as Promise<void>,

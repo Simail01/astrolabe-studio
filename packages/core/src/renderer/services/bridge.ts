@@ -48,4 +48,11 @@ export const bridge = {
   wikiDelete: (projectPath: string, type: string, id: string) => api.invoke('wiki:delete', projectPath, type, id) as Promise<void>,
   wikiSearch: (projectPath: string, query: string) => api.invoke('wiki:search', projectPath, query) as Promise<unknown[]>,
   wikiRelated: (projectPath: string, entryId: string) => api.invoke('wiki:related', projectPath, entryId) as Promise<unknown[]>,
+
+  // Fanlib
+  fanlibSave: (workspacePath: string, card: unknown) => api.invoke('fanlib:save', workspacePath, card) as Promise<void>,
+  fanlibGet: (workspacePath: string, type: string, id: string) => api.invoke('fanlib:get', workspacePath, type, id) as Promise<unknown>,
+  fanlibList: (workspacePath: string, type?: string) => api.invoke('fanlib:list', workspacePath, type) as Promise<unknown[]>,
+  fanlibDelete: (workspacePath: string, type: string, id: string) => api.invoke('fanlib:delete', workspacePath, type, id) as Promise<void>,
+  fanlibSearch: (workspacePath: string, query: string) => api.invoke('fanlib:search', workspacePath, query) as Promise<unknown[]>,
 };

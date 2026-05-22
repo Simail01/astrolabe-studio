@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLayoutStore } from '../../stores/layout.store';
 import { useWikiStore } from '../../stores/wiki.store';
 import { useWorkspaceStore } from '../../stores/workspace.store';
@@ -81,6 +81,41 @@ export const RightPanel: React.FC = () => {
       console.error('Wiki save failed:', e);
     }
   };
+
+  const handleEnrich = async () => {
+    const projectPath = getProjectPath();
+    const entry = wiki.entries.find(e => e.id === selectedEntryId);
+    if (!projectPath || !entry) return;
+    setAiWorking('enrich');
+    try {
+      const results = await bridge.wikiEnrich(projectPath, entry.id, entry.title, entry.type) as any[];
+      setEnrichResults(results);
+    } catch(e) { console.error(e); }
+    finally { setAiWorking(''); }
+  };
+
+  const handleConsistency = async () => {
+    const projectPath = getProjectPath();
+    if (!projectPath) return;
+    setAiWorking('consistency');
+    try {
+      const results = await bridge.wikiConsistency(projectPath) as any[];
+      setConsistencyResults(results);
+    } catch(e) { console.error(e); }
+    finally { setAiWorking(''); }
+  };
+
+  const handleRelations = async () => {
+    const projectPath = getProjectPath();
+    if (!projectPath) return;
+    setAiWorking('relations');
+    try {
+      const results = await bridge.wikiRelations(projectPath) as any[];
+      setRelationResults(results);
+    } catch(e) { console.error(e); }
+    finally { setAiWorking(''); }
+  };
+
   const {
     filteredEntries, selectedEntryId, searchQuery, setSearchQuery, selectEntry,
     suggestions, confirmSuggestion, rejectSuggestion, clearSuggestions,
@@ -88,6 +123,10 @@ export const RightPanel: React.FC = () => {
   const entry = wiki.entries.find((e) => e.id === selectedEntryId);
   const pendingCount = suggestions.filter(s => s.status === 'pending').length;
   const [showSuggestions, setShowSuggestions] = React.useState(true);
+  const [enrichResults, setEnrichResults] = useState<any[] | null>(null);
+  const [consistencyResults, setConsistencyResults] = useState<any[] | null>(null);
+  const [relationResults, setRelationResults] = useState<any[] | null>(null);
+  const [aiWorking, setAiWorking] = useState('');
 
   if (!visible) return null;
 
@@ -142,6 +181,81 @@ export const RightPanel: React.FC = () => {
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
       />
+      <div style={{ display: 'flex', gap: 4, padding: '4px 8px', flexWrap: 'wrap' }}>
+        <button style={{
+          padding: '4px 10px', fontSize: 11, backgroundColor: '#0e639c', color: '#fff',
+          border: 'none', borderRadius: 3, cursor: 'pointer', opacity: selectedEntryId ? 1 : 0.5,
+        }} onClick={handleEnrich} disabled={!selectedEntryId} title="AI 补充当前选中条目">
+          补充条目
+        </button>
+        <button style={{
+          padding: '4px 10px', fontSize: 11, backgroundColor: '#0e639c', color: '#fff',
+          border: 'none', borderRadius: 3, cursor: 'pointer',
+        }} onClick={handleConsistency} title="AI 扫描全文检查一致性">
+          一致性检查
+        </button>
+        <button style={{
+          padding: '4px 10px', fontSize: 11, backgroundColor: '#5a3e00', color: '#dcdcaa',
+          border: 'none', borderRadius: 3, cursor: 'pointer',
+        }} onClick={handleRelations} title="AI 分析条目间关系">
+          分析关系
+        </button>
+      </div>
+      {aiWorking && (
+        <div style={{ padding: '8px 12px', backgroundColor: '#094771', color: '#fff', fontSize: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ display: 'inline-block', width: 10, height: 10, border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%' }} />
+          AI 正在分析...
+        </div>
+      )}
+      {enrichResults && (
+        <div style={{ padding: 8, borderBottom: '1px solid #3c3c3c', maxHeight: 200, overflow: 'auto' }}>
+          <div style={{ fontSize: 12, color: '#4ec9b0', marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
+            <span>发现 {enrichResults.length} 条补充</span>
+            <button onClick={() => setEnrichResults(null)} style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 12 }}>x</button>
+          </div>
+          {enrichResults.map((r: any, i: number) => (
+            <div key={i} style={{ padding: '4px 0', fontSize: 12, color: '#ccc' }}>
+              <span style={{ color: '#dcdcaa' }}>{r.field}</span>: {r.currentValue ? `${r.currentValue} -> ` : ''}{r.newValue}
+              <span style={{ color: '#888', marginLeft: 8, fontSize: 10 }}>({r.sourceChapter})</span>
+              <span style={{ marginLeft: 8, color: r.action === 'overwrite' ? '#f44747' : r.action === 'append' ? '#4ec9b0' : '#dcdcaa', fontSize: 10 }}>[{r.action}]</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {consistencyResults && (
+        <div style={{ padding: 8, borderBottom: '1px solid #3c3c3c', maxHeight: 200, overflow: 'auto' }}>
+          <div style={{ fontSize: 12, color: '#d4a72c', marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
+            <span>发现 {consistencyResults.length} 处矛盾</span>
+            <button onClick={() => setConsistencyResults(null)} style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 12 }}>x</button>
+          </div>
+          {consistencyResults.map((r: any, i: number) => (
+            <div key={i} style={{ padding: '4px 0', fontSize: 12, color: '#ccc', borderBottom: '1px solid #333', paddingBottom: 6, marginBottom: 4 }}>
+              <span style={{ color: r.severity === 'critical' ? '#f44747' : r.severity === 'warning' ? '#dcdcaa' : '#888', fontWeight: 600 }}>
+                {r.severity === 'critical' ? '严重' : r.severity === 'warning' ? '警告' : '提示'}
+              </span>
+              <div style={{ marginTop: 2 }}>{r.entryTitle}.{r.field}</div>
+              <div style={{ color: '#888', fontSize: 11 }}>{r.chapterA}: "{r.valueA}" &lt;-&gt; {r.chapterB}: "{r.valueB}"</div>
+              <div style={{ color: '#888', fontSize: 11 }}>建议: {r.suggestion}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      {relationResults && (
+        <div style={{ padding: 8, borderBottom: '1px solid #3c3c3c', maxHeight: 200, overflow: 'auto' }}>
+          <div style={{ fontSize: 12, color: '#4ec9b0', marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
+            <span>发现 {relationResults.length} 条关系</span>
+            <button onClick={() => setRelationResults(null)} style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 12 }}>x</button>
+          </div>
+          {relationResults.map((r: any, i: number) => (
+            <div key={i} style={{ padding: '4px 0', fontSize: 12, color: '#ccc' }}>
+              <span style={{ color: '#dcdcaa' }}>{r.sourceTitle}</span>
+              {' <- '}<span style={{ color: '#4ec9b0' }}>{r.relationType}</span>{' -> '}
+              <span style={{ color: '#dcdcaa' }}>{r.targetTitle}</span>
+              <span style={{ color: '#888', marginLeft: 8, fontSize: 10 }}>({Math.round(r.confidence * 100)}%{r.sourceChapter ? ', ' + r.sourceChapter : ''})</span>
+            </div>
+          ))}
+        </div>
+      )}
       <div style={list}>
         {filteredEntries.map((e) => (
           <div

@@ -18,6 +18,7 @@ interface LayoutState {
   toggleBottomPanel: () => void;
   toggleSettings: () => void;
   openSettings: () => void;
+  openRightPanel: () => void;
 }
 
 export const useLayoutStore = create<LayoutState>((set) => ({
@@ -53,4 +54,5 @@ export const useLayoutStore = create<LayoutState>((set) => ({
   toggleBottomPanel: () => set((s) => ({ bottomPanelVisible: !s.bottomPanelVisible })),
   toggleSettings: () => set((s) => ({ settingsOpen: !s.settingsOpen })),
   openSettings: () => set({ settingsOpen: true }),
+  openRightPanel: () => set({ rightPanelVisible: true }),
 }));

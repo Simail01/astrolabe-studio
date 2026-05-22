@@ -4,7 +4,8 @@ import { useOutlineStore } from '../../stores/outline.store';
 import { useWorkspaceStore } from '../../stores/workspace.store';
 import { bridge } from '../../services/bridge';
 import { useWikiStore } from '../../stores/wiki.store';
-import type { OutlineNode, Chapter, WikiEntry } from '@astrolabe/shared';
+import { useLayoutStore } from '../../stores/layout.store';
+import type { OutlineNode, Chapter, WikiEntry, WikiSuggestion } from '@astrolabe/shared';
 
 const container: React.CSSProperties = {
   display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#1e1e1e',
@@ -37,6 +38,7 @@ export const ChapterEditor: React.FC<Props> = () => {
   const getProjectPath = useWorkspaceStore((s) => s.getProjectPath);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [extracting, setExtracting] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle');
 
   const selectedNode = outline?.nodes ? findNode(outline.nodes, selectedNodeId) : null;
@@ -219,6 +221,33 @@ export const ChapterEditor: React.FC<Props> = () => {
             }}
           >
             {aiGenerating ? 'AI 撰写中...' : 'AI 续写'}
+          </button>
+          <button
+            style={{ ...btn, backgroundColor: extracting ? '#3c3c3c' : '#0e639c' }}
+            disabled={!!extracting || !selectedNodeId}
+            onClick={async () => {
+              setExtracting(true);
+              try {
+                const projectPath = getProjectPath();
+                if (!projectPath) return;
+                const store = useChapterStore.getState();
+                const suggestions = await bridge.wikiExtract(
+                  projectPath,
+                  store.content,
+                  selectedNode?.title || '未命名'
+                ) as WikiSuggestion[];
+                if (suggestions && suggestions.length > 0) {
+                  useWikiStore.getState().setSuggestions(suggestions);
+                  useLayoutStore.getState().openRightPanel();
+                }
+              } catch (e) {
+                console.error('Wiki extraction failed:', e);
+              } finally {
+                setExtracting(false);
+              }
+            }}
+          >
+            Wiki 提取
           </button>
         </div>
       </div>

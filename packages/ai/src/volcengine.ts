@@ -10,6 +10,9 @@ export interface ImageGenerateOptions {
   seed?: number;
   outputFormat?: string;
   watermark?: boolean;
+  sequentialImageGeneration?: string;
+  responseFormat?: string;
+  stream?: boolean;
 }
 
 export interface ImageToImageOptions {
@@ -19,6 +22,8 @@ export interface ImageToImageOptions {
   size?: string;
   outputFormat?: string;
   watermark?: boolean;
+  sequentialImageGeneration?: string;
+  responseFormat?: string;
 }
 
 const DEFAULT_BASE_URL = 'https://ark.cn-beijing.volces.com/api/v3';
@@ -51,15 +56,38 @@ export function createVolcEngineClient(config: VolcEngineConfig) {
     return response.json();
   }
 
+  function buildBody(options: ImageGenerateOptions | ImageToImageOptions): Record<string, unknown> {
+    const body: Record<string, unknown> = {
+      model: options.model,
+      prompt: options.prompt,
+      size: options.size ?? '2K',
+      sequential_image_generation: options.sequentialImageGeneration ?? 'disabled',
+      response_format: options.responseFormat ?? 'url',
+      stream: false,
+      watermark: options.watermark ?? true,
+    };
+
+    if ('referenceImage' in options && options.referenceImage) {
+      body.image = options.referenceImage;
+    }
+    if ('seed' in options && options.seed) {
+      body.seed = options.seed;
+    }
+
+    return body;
+  }
+
   return {
-    /** 连通性测试 */
+    /** 连通性测试：用最小参数调用接口 */
     async ping(): Promise<boolean> {
       try {
         await request('/images/generations', {
           model: 'doubao-seedream-5-0-260128',
           prompt: 'test',
           size: '1024x1024',
-          output_format: 'png',
+          sequential_image_generation: 'disabled',
+          response_format: 'url',
+          stream: false,
           watermark: false,
         });
         return true;
@@ -70,31 +98,14 @@ export function createVolcEngineClient(config: VolcEngineConfig) {
 
     /** 文生图 */
     async generateImage(options: ImageGenerateOptions): Promise<string[]> {
-      const body: Record<string, unknown> = {
-        model: options.model,
-        prompt: options.prompt,
-        size: options.size ?? '1024x1024',
-        output_format: options.outputFormat ?? 'png',
-        watermark: options.watermark ?? false,
-      };
-
-      if (options.seed) body.seed = options.seed;
-
+      const body = buildBody(options);
       const data = await request('/images/generations', body) as ImageGenResponse;
       return data.data.map((img) => img.url);
     },
 
     /** 图生图 */
     async imageToImage(options: ImageToImageOptions): Promise<string[]> {
-      const body: Record<string, unknown> = {
-        model: options.model,
-        prompt: options.prompt,
-        image: options.referenceImage,
-        size: options.size ?? '1024x1024',
-        output_format: options.outputFormat ?? 'png',
-        watermark: options.watermark ?? false,
-      };
-
+      const body = buildBody(options);
       const data = await request('/images/generations', body) as ImageGenResponse;
       return data.data.map((img) => img.url);
     },

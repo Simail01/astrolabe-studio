@@ -17,7 +17,7 @@ const overlay: React.CSSProperties = {
 const dialog: React.CSSProperties = {
   width: 520,
   maxHeight: 400,
-  backgroundColor: '#252526',
+  backgroundColor: 'var(--bg-panel)',
   borderRadius: 6,
   boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
   display: 'flex',
@@ -31,9 +31,9 @@ const input: React.CSSProperties = {
   fontSize: 15,
   border: 'none',
   outline: 'none',
-  backgroundColor: '#3c3c3c',
-  color: '#ffffff',
-  borderBottom: '1px solid #555',
+  backgroundColor: 'var(--border-default)',
+  color: 'var(--text-inverse)',
+  borderBottom: '1px solid var(--border-default)',
 };
 
 const listContainer: React.CSSProperties = {
@@ -52,13 +52,13 @@ const item: React.CSSProperties = {
 
 const itemActive: React.CSSProperties = {
   ...item,
-  backgroundColor: '#094771',
+  backgroundColor: 'var(--accent-dim)',
 };
 
 const categoryBadge: React.CSSProperties = {
   fontSize: 11,
-  color: '#999',
-  backgroundColor: '#3c3c3c',
+  color: 'var(--text-secondary)',
+  backgroundColor: 'var(--border-default)',
   padding: '2px 6px',
   borderRadius: 3,
 };
@@ -122,7 +122,7 @@ export const CommandPalette: React.FC = () => {
             </div>
           ))}
           {filteredCommands.length === 0 && (
-            <div style={{ padding: 14, color: '#666', fontSize: 13 }}>
+            <div style={{ padding: 14, color: 'var(--text-muted)', fontSize: 13 }}>
               未找到匹配的命令
             </div>
           )}

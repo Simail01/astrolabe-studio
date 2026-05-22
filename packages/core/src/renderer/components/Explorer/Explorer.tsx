@@ -9,16 +9,16 @@ import { bridge } from '../../services/bridge';
 import type { AstrolabeConfig, Outline, WikiEntry } from '@astrolabe/shared';
 
 const panel: React.CSSProperties = {
-  width: 260, minWidth: 200, backgroundColor: '#252526', display: 'flex', flexDirection: 'column', overflow: 'hidden',
+  width: 260, minWidth: 200, backgroundColor: 'var(--bg-panel)', display: 'flex', flexDirection: 'column', overflow: 'hidden',
 };
 const title: React.CSSProperties = {
-  padding: '8px 12px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#999', letterSpacing: 1,
+  padding: '8px 12px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: 'var(--text-secondary)', letterSpacing: 1,
 };
 const list: React.CSSProperties = { flex: 1, overflow: 'auto' };
 const projectItem: React.CSSProperties = {
-  padding: '6px 12px', cursor: 'pointer', fontSize: 13, color: '#ccc', display: 'flex', alignItems: 'center', gap: 6,
+  padding: '6px 12px', cursor: 'pointer', fontSize: 13, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6,
 };
-const empty: React.CSSProperties = { padding: 12, color: '#666', fontSize: 13 };
+const empty: React.CSSProperties = { padding: 12, color: 'var(--text-muted)', fontSize: 13 };
 
 const fileIcon: React.CSSProperties = { fontSize: 14 };
 
@@ -31,8 +31,8 @@ export const Explorer: React.FC = () => {
 
   const activeProjectStyle: React.CSSProperties = {
     ...projectItem,
-    backgroundColor: '#094771',
-    color: '#fff',
+    backgroundColor: 'var(--accent-dim)',
+    color: 'var(--text-inverse)',
   };
 
   // Load fanlib cards when workspace opens (workspace-level, not project-level)
@@ -64,7 +64,7 @@ export const Explorer: React.FC = () => {
         {workspace && (
           <button
             onClick={() => setShowCreateDialog(true)}
-            style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: 16, padding: '2px 4px' }}
+            style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 16, padding: '2px 4px' }}
             title="新建作品"
           >
             +

@@ -26,4 +26,18 @@ export const bridge = {
 
   // Event listeners
   onFileChanged: (callback: (path: string) => void) => api.on('fs:fileChanged', callback as (...args: unknown[]) => void),
+
+  // AI
+  generateText: (prompt: string, systemPrompt?: string) => api.invoke('ai:text:generate', prompt, systemPrompt) as Promise<string>,
+  generateTextStream: (prompt: string, systemPrompt?: string) => api.invoke('ai:text:stream', prompt, systemPrompt) as Promise<{ started: boolean }>,
+  generateImage: (prompt: string) => api.invoke('ai:image:generate', prompt) as Promise<string[]>,
+  generateVideo: (prompt: string) => api.invoke('ai:video:generate', prompt) as Promise<string>,
+  onAIChunk: (callback: (text: string) => void) => api.on('ai:text:chunk', callback as (...args: unknown[]) => void),
+  onAIDone: (callback: (fullText: string) => void) => api.on('ai:text:done', callback as (...args: unknown[]) => void),
+  onAIError: (callback: (error: string) => void) => api.on('ai:text:error', callback as (...args: unknown[]) => void),
+  // Key management
+  setAIKey: (provider: string, key: string) => api.invoke('ai:keys:set', provider, key) as Promise<void>,
+  getAIKey: (provider: string) => api.invoke('ai:keys:get', provider) as Promise<string | null>,
+  listAIKeys: () => api.invoke('ai:keys:list') as Promise<string[]>,
+  deleteAIKey: (provider: string) => api.invoke('ai:keys:delete', provider) as Promise<void>,
 };

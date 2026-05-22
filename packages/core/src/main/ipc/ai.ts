@@ -1,0 +1,55 @@
+import { ipcMain } from 'electron';
+import { createDeepSeekClient } from '@astrolabe/ai';
+import type { StreamCallback } from '@astrolabe/ai';
+import { aiKeyStore } from '../services/keystore.service';
+
+function getDeepSeekClient() {
+  const apiKey = aiKeyStore.getKey('deepseek');
+  if (!apiKey) throw new Error('DeepSeek API Key 未配置');
+  return createDeepSeekClient({ apiKey });
+}
+
+export function registerAIHandlers(): void {
+  ipcMain.handle('ai:text:generate', async (_event, prompt: string, systemPrompt?: string) => {
+    const client = getDeepSeekClient();
+    return client.generate(prompt, { systemPrompt });
+  });
+
+  ipcMain.handle('ai:text:stream', async (event, prompt: string, systemPrompt?: string) => {
+    const client = getDeepSeekClient();
+    const sender = event.sender;
+
+    const callbacks: StreamCallback = {
+      onChunk: (text) => sender.send('ai:text:chunk', text),
+      onDone: (fullText) => sender.send('ai:text:done', fullText),
+      onError: (err) => sender.send('ai:text:error', err.message),
+    };
+
+    await client.generateStream(prompt, callbacks, { systemPrompt });
+    return { started: true };
+  });
+
+  ipcMain.handle('ai:image:generate', async (_event, prompt: string) => {
+    return [`[image] ${prompt.slice(0, 50)}...`];
+  });
+
+  ipcMain.handle('ai:video:generate', async (_event, prompt: string) => {
+    return `[video] ${prompt.slice(0, 50)}...`;
+  });
+
+  ipcMain.handle('ai:keys:set', (_event, provider: string, key: string) => {
+    aiKeyStore.setKey(provider, key);
+  });
+
+  ipcMain.handle('ai:keys:get', (_event, provider: string) => {
+    return aiKeyStore.getKey(provider);
+  });
+
+  ipcMain.handle('ai:keys:list', () => {
+    return aiKeyStore.listKeys();
+  });
+
+  ipcMain.handle('ai:keys:delete', (_event, provider: string) => {
+    aiKeyStore.deleteKey(provider);
+  });
+}

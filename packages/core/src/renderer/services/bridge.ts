@@ -24,6 +24,10 @@ export const bridge = {
   exportCard: (cardPath: string, format: string) => api.invoke('export:card', cardPath, format) as Promise<string>,
   exportComic: (projectPath: string, format: string) => api.invoke('export:comic', projectPath, format) as Promise<string>,
 
+  // Dialog & Workspace
+  selectFolder: () => api.invoke('dialog:selectFolder') as Promise<string | null>,
+  openWorkspace: (folderPath: string) => api.invoke('workspace:open', folderPath) as Promise<unknown>,
+
   // Event listeners
   onFileChanged: (callback: (path: string) => void) => api.on('fs:fileChanged', callback as (...args: unknown[]) => void),
 

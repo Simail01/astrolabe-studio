@@ -7,6 +7,8 @@ import { registerWikiHandlers } from './wiki';
 import { registerFanlibHandlers } from './fanlib';
 import { registerDesignHandlers } from './design';
 import { registerPipelineHandlers } from './pipeline';
+import { registerDialogHandlers } from './dialog';
+import { registerWorkspaceHandlers } from './workspace';
 
 export function registerAllHandlers(): void {
   registerFileHandlers();
@@ -18,4 +20,6 @@ export function registerAllHandlers(): void {
   registerFanlibHandlers();
   registerDesignHandlers();
   registerPipelineHandlers();
+  registerDialogHandlers();
+  registerWorkspaceHandlers();
 }

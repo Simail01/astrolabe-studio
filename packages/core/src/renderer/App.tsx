@@ -7,6 +7,7 @@ import { BottomPanel } from './components/BottomPanel/BottomPanel';
 import { StatusBar } from './components/StatusBar/StatusBar';
 import { CommandPalette } from './components/CommandPalette/CommandPalette';
 import { Explorer } from './components/Explorer/Explorer';
+import { WorkspaceDialog } from './components/Workspace/WorkspaceDialog';
 import { useLayoutStore } from './stores/layout.store';
 import { useKeyboard } from './hooks/useKeyboard';
 
@@ -47,6 +48,7 @@ export const App: React.FC = () => {
 
   return (
     <div style={SHELL}>
+      <WorkspaceDialog />
       <div style={MENUBAR}>
         <span>文件</span>
         <span>编辑</span>

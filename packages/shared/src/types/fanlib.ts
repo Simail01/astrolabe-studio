@@ -1,4 +1,4 @@
-export type FanlibCardType = 'character' | 'worldview' | 'item' | 'event';
+export type FanlibCardType = 'character' | 'worldview' | 'item' | 'faction';
 
 export interface CardSource {
   type: 'anime' | 'movie' | 'novel' | 'comic' | 'game' | 'real_person' | 'real_world' | 'original';
@@ -53,16 +53,16 @@ export interface ItemCard extends CardMeta {
   limitations: string;
 }
 
-export interface EventCard extends CardMeta {
-  type: 'event';
-  participants: string[];
-  cause: string;
-  process: string;
-  result: string;
-  narrativePattern: string;
+export interface FactionCard extends CardMeta {
+  type: 'faction';
+  leader: string;
+  members: string[];
+  goal: string;
+  territory: string;
+  history: string;
 }
 
-export type FanlibCard = CharacterCard | WorldviewCard | ItemCard | EventCard;
+export type FanlibCard = CharacterCard | WorldviewCard | ItemCard | FactionCard;
 
 export interface FanlibImport {
   id: string;

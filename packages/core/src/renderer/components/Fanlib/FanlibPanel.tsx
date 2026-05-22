@@ -23,8 +23,8 @@ const importBtn: React.CSSProperties = {
   padding: '2px 8px', fontSize: 11, backgroundColor: '#007acc', color: '#fff', border: 'none', borderRadius: 3, cursor: 'pointer',
 };
 
-const typeLabels: Record<string, string> = { character: '人物', worldview: '世界观', item: '物品', event: '事件' };
-const types = ['character', 'worldview', 'item', 'event'] as const;
+const typeLabels: Record<string, string> = { character: '人物', worldview: '世界观', item: '物品', faction: '势力' };
+const types = ['character', 'worldview', 'item', 'faction'] as const;
 
 export const FanlibPanel: React.FC = () => {
   const { filteredCards, selectedCardId, searchQuery, setSearchQuery, selectCard, openImportDialog } = useFanlibStore();

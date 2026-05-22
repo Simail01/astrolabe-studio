@@ -54,6 +54,9 @@ export const bridge = {
   wikiSearch: (projectPath: string, query: string) => api.invoke('wiki:search', projectPath, query) as Promise<unknown[]>,
   wikiRelated: (projectPath: string, entryId: string) => api.invoke('wiki:related', projectPath, entryId) as Promise<unknown[]>,
   wikiExtract: (projectPath: string, chapterContent: string, chapterTitle: string) => api.invoke('wiki:extract', projectPath, chapterContent, chapterTitle) as Promise<unknown[]>,
+  wikiEnrich: (projectPath: string, entryId: string, entryTitle: string, entryType: string) => api.invoke('wiki:enrich', projectPath, entryId, entryTitle, entryType) as Promise<unknown[]>,
+  wikiConsistency: (projectPath: string) => api.invoke('wiki:consistency', projectPath) as Promise<unknown[]>,
+  wikiRelations: (projectPath: string) => api.invoke('wiki:relations', projectPath) as Promise<unknown[]>,
 
   // Fanlib
   fanlibSave: (workspacePath: string, card: unknown) => api.invoke('fanlib:save', workspacePath, card) as Promise<void>,

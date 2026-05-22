@@ -5,6 +5,7 @@ import { registerExportHandlers } from './export';
 import { registerAIHandlers } from './ai';
 import { registerWikiHandlers } from './wiki';
 import { registerFanlibHandlers } from './fanlib';
+import { registerDesignHandlers } from './design';
 
 export function registerAllHandlers(): void {
   registerFileHandlers();
@@ -14,4 +15,5 @@ export function registerAllHandlers(): void {
   registerAIHandlers();
   registerWikiHandlers();
   registerFanlibHandlers();
+  registerDesignHandlers();
 }

@@ -5,7 +5,9 @@ import { EditorArea } from './components/EditorArea/EditorArea';
 import { RightPanel } from './components/RightPanel/RightPanel';
 import { BottomPanel } from './components/BottomPanel/BottomPanel';
 import { StatusBar } from './components/StatusBar/StatusBar';
+import { CommandPalette } from './components/CommandPalette/CommandPalette';
 import { useLayoutStore } from './stores/layout.store';
+import { useKeyboard } from './hooks/useKeyboard';
 
 const SHELL: React.CSSProperties = {
   display: 'flex',
@@ -39,6 +41,7 @@ const CENTER: React.CSSProperties = {
 };
 
 export const App: React.FC = () => {
+  useKeyboard();
   const bottomVisible = useLayoutStore((s) => s.bottomPanelVisible);
 
   return (
@@ -63,6 +66,7 @@ export const App: React.FC = () => {
         </div>
       </div>
       <StatusBar />
+      <CommandPalette />
     </div>
   );
 };

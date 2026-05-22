@@ -35,6 +35,14 @@ export const Explorer: React.FC = () => {
     color: '#fff',
   };
 
+  // Load fanlib cards when workspace opens (workspace-level, not project-level)
+  useEffect(() => {
+    if (!workspace) return;
+    bridge.fanlibSearch(workspace.path, '').then((cards) => {
+      if (cards && Array.isArray(cards)) useFanlibStore.getState().setCards(cards as any[]);
+    }).catch(() => {});
+  }, [workspace]);
+
   // When active project changes, load outline and wiki from disk
   useEffect(() => {
     if (!workspace || !activeProject) return;
@@ -44,9 +52,6 @@ export const Explorer: React.FC = () => {
     }).catch(() => {});
     bridge.wikiSearch(projectPath, '').then((entries) => {
       if (entries) useWikiStore.getState().setEntries(entries as WikiEntry[]);
-    }).catch(() => {});
-    bridge.fanlibSearch(workspace.path, '').then((cards) => {
-      if (cards && Array.isArray(cards)) useFanlibStore.getState().setCards(cards as any[]);
     }).catch(() => {});
   }, [activeProject, workspace]);
 

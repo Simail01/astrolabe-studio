@@ -1,3 +1,4 @@
+import fs from 'fs';
 import path from 'path';
 import { fileService } from './file.service';
 import type { WikiEntry, WikiIndex } from '@astrolabe/shared';
@@ -65,6 +66,8 @@ export const wikiService = {
   },
 
   deleteEntry(projectPath: string, type: string, id: string): void {
+    const filePath = path.join(getTypeDir(projectPath, type), `${id}.json`);
+    try { fs.unlinkSync(filePath); } catch {}
     const index = loadIndex(projectPath);
     index.entries = index.entries.filter((e) => e.id !== id);
     saveIndex(projectPath, index);

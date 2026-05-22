@@ -48,7 +48,7 @@ export const ImportDialog: React.FC = () => {
     setImporting(true);
     setError('');
     try {
-      const attrs: Record<string, string> = { 来源: card.source?.title || '' };
+      const attrs: Record<string, string | string[]> = { 来源: card.source?.title || '' };
       if (useAdapted && adaptations) {
         for (const a of adaptations) {
           attrs[a.field] = adaptedAttrs[a.field] || a.adapted;
@@ -59,6 +59,8 @@ export const ImportDialog: React.FC = () => {
         attrs['性格'] = c.personality || '';
         attrs['能力'] = (c.abilities || []).join('、');
       }
+      // Carry over design images from fanlib card
+      const designImages = (card as any).designImages || [];
       await bridge.wikiSave(projectPath, {
         id: `wiki-fanlib-${Date.now()}`,
         type: 'person',
@@ -66,7 +68,7 @@ export const ImportDialog: React.FC = () => {
         aliases: card.aliases || [],
         summary: useAdapted ? `平行宇宙改编自同人库卡片「${card.name}」` : (card as any).personality || '',
         content: (card as any).background || '',
-        attributes: attrs,
+        attributes: { ...attrs, designImages },
         relations: [],
         sourceChapters: [],
         confidence: 1,

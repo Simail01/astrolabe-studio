@@ -51,7 +51,7 @@ const typeLabels: Record<string, string> = {
   person: '角色', location: '地点', faction: '势力', item: '物品', event: '事件', rule: '规则',
 };
 
-// Inline Wiki detail with edit/delete
+// Inline Wiki detail with edit/delete/design images
 const WikiDetail: React.FC<{ entry: WikiEntry }> = ({ entry: initialEntry }) => {
   const getProjectPath = useWorkspaceStore((s) => s.getProjectPath);
   const [editing, setEditing] = useState(false);
@@ -59,6 +59,9 @@ const WikiDetail: React.FC<{ entry: WikiEntry }> = ({ entry: initialEntry }) => 
   const [summary, setSummary] = useState(initialEntry.summary || '');
   const [content, setContent] = useState(initialEntry.content || '');
   const [saving, setSaving] = useState(false);
+  const [genPrompt, setGenPrompt] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [genError, setGenError] = useState('');
 
   const handleSave = async () => {
     const projectPath = getProjectPath();
@@ -83,6 +86,27 @@ const WikiDetail: React.FC<{ entry: WikiEntry }> = ({ entry: initialEntry }) => 
     } catch (e) { console.error(e); }
   };
 
+  const handleGenerateImage = async () => {
+    const projectPath = getProjectPath();
+    if (!projectPath) { setGenError('未选择项目'); return; }
+    const volcKey = await bridge.getAIKey('volcengine').catch(() => null);
+    if (!volcKey) { setGenError('请先配置火山方舟 API Key'); return; }
+    setGenerating(true); setGenError('');
+    try {
+      const model = await bridge.getAIKey('volcengine-image-model') || 'doubao-seedream-5-0-260128';
+      const attrStr = Object.entries(initialEntry.attributes || {}).map(([k,v]) => `${k}：${Array.isArray(v)?v.join('、'):v}`).join('。');
+      const prompt = genPrompt || `角色设定图，${initialEntry.title}，${attrStr}，${initialEntry.summary||''}`;
+      const urls = await bridge.generateImage({ model, prompt, size: '2K' }) as string[];
+      if (!urls || urls.length === 0) { setGenError('AI 未返回图片'); return; }
+      const designImages = [...(initialEntry.attributes?.designImages as string[] || []), ...urls];
+      const updated = { ...initialEntry, attributes: { ...initialEntry.attributes, designImages } as any, updatedAt: new Date().toISOString() };
+      await bridge.wikiSave(projectPath, updated);
+      useWikiStore.getState().addOrUpdateEntry(updated);
+      setGenPrompt('');
+    } catch (e) { setGenError((e as Error).message || '生成失败'); }
+    finally { setGenerating(false); }
+  };
+
   if (editing) {
     return (
       <div style={{ ...detail, borderTop: '1px solid #3c3c3c' }}>
@@ -97,6 +121,9 @@ const WikiDetail: React.FC<{ entry: WikiEntry }> = ({ entry: initialEntry }) => 
     );
   }
 
+  const designImages = (initialEntry.attributes?.designImages as string[]) || [];
+  const attrs = initialEntry.attributes || {};
+
   return (
     <div style={{ ...detail, borderTop: '1px solid #3c3c3c' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
@@ -108,11 +135,36 @@ const WikiDetail: React.FC<{ entry: WikiEntry }> = ({ entry: initialEntry }) => 
       </div>
       {initialEntry.summary && <div style={field}><div style={fieldLabel}>摘要</div><div style={fieldValue}>{initialEntry.summary}</div></div>}
       {initialEntry.content && <div style={field}><div style={fieldLabel}>详情</div><div style={fieldValue}>{initialEntry.content}</div></div>}
+      {Object.keys(attrs).length > 0 && (
+        <div style={field}>
+          <div style={fieldLabel}>属性</div>
+          {Object.entries(attrs).filter(([k]) => k !== 'designImages').map(([key, val]) => (
+            <div key={key} style={{ fontSize: 12, marginBottom: 2 }}>
+              <span style={{ color: '#888' }}>{key}:</span>{' '}
+              <span style={{ color: '#ccc' }}>{Array.isArray(val) ? val.join('、') : String(val)}</span>
+            </div>
+          ))}
+        </div>
+      )}
       {initialEntry.relations?.length > 0 && (
         <div style={field}><div style={fieldLabel}>关联</div>
           {initialEntry.relations.map((r, i) => <div key={i} style={{ fontSize: 12, color: '#4ec9b0', marginBottom: 2 }}>{r.relationType} → {r.targetId}</div>)}
         </div>
       )}
+      {/* Design Images */}
+      <div style={{ ...field, borderTop: '1px solid #3c3c3c', paddingTop: 8 }}>
+        <div style={{ ...fieldLabel, marginBottom: 4 }}>设定图</div>
+        {designImages.length > 0 ? (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+            {designImages.map((url: string, i: number) => (
+              <img key={i} src={url} alt={`设定图 ${i+1}`} style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4, border: '1px solid #444' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            ))}
+          </div>
+        ) : <div style={{ color: '#666', fontSize: 11, marginBottom: 6 }}>暂无设定图</div>}
+        <input value={genPrompt} onChange={e => setGenPrompt(e.target.value)} placeholder="自定义 prompt（可选）" style={{ width: '100%', padding: '3px 6px', fontSize: 11, backgroundColor: '#3c3c3c', border: '1px solid #555', color: '#fff', borderRadius: 3, outline: 'none', marginBottom: 4 }} />
+        <button onClick={handleGenerateImage} disabled={generating} style={{ padding: '3px 10px', fontSize: 11, backgroundColor: generating ? '#3c3c3c' : '#5a3e00', color: generating ? '#888' : '#dcdcaa', border: 'none', borderRadius: 3, cursor: generating ? 'not-allowed' : 'pointer' }}>{generating ? '生成中...' : 'AI 生成设定图'}</button>
+        {genError && <span style={{ color: '#f44747', fontSize: 11, marginLeft: 8 }}>{genError}</span>}
+      </div>
     </div>
   );
 };

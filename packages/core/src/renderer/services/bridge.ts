@@ -1,4 +1,4 @@
-import type { Project, Chapter, WorkspaceSession, RecoveryDraft } from '@astrolabe/shared';
+import type { AstrolabeConfig, WorkspaceSession, RecoveryDraft } from '@astrolabe/shared';
 
 const api = window.astrolabe;
 
@@ -11,8 +11,8 @@ export const bridge = {
   mkdir: (path: string) => api.invoke('fs:mkdir', path) as Promise<void>,
 
   // Project
-  readProject: (path: string) => api.invoke('project:read', path) as Promise<Project>,
-  createProject: (path: string, name: string) => api.invoke('project:create', path, name) as Promise<Project>,
+  readProject: (path: string) => api.invoke('project:read', path) as Promise<AstrolabeConfig>,
+  createProject: (path: string, name: string) => api.invoke('project:create', path, name) as Promise<AstrolabeConfig>,
 
   // Session
   saveSession: (session: WorkspaceSession) => api.invoke('session:save', session) as Promise<void>,

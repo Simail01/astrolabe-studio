@@ -90,7 +90,9 @@ interface Props {
 export const AISettings: React.FC<Props> = ({ onSaved }) => {
   const [deepseekKey, setDeepseekKey] = useState('');
   const [deepseekBaseUrl, setDeepseekBaseUrl] = useState('');
+  const [deepseekModel, setDeepseekModel] = useState('');
   const [volcKey, setVolcKey] = useState('');
+  const [volcImageModel, setVolcImageModel] = useState('');
   const [volcStatus, setVolcStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
   const [volcStatusMsg, setVolcStatusMsg] = useState('');
   const [showSaved, setShowSaved] = useState(false);
@@ -100,18 +102,23 @@ export const AISettings: React.FC<Props> = ({ onSaved }) => {
   useEffect(() => {
     bridge.getAIKey('deepseek').then((k) => { if (k) setDeepseekKey(k); }).catch(() => {});
     bridge.getAIKey('deepseek-baseurl').then((k) => { if (k) setDeepseekBaseUrl(k); }).catch(() => {});
+    bridge.getAIKey('deepseek-model').then((k) => { if (k) setDeepseekModel(k); }).catch(() => {});
     bridge.getAIKey('volcengine').then((k) => { if (k) setVolcKey(k); }).catch(() => {});
+    bridge.getAIKey('volcengine-image-model').then((k) => { if (k) setVolcImageModel(k); }).catch(() => {});
   }, []);
 
   const [saveError, setSaveError] = useState('');
 
   const handleSave = () => {
     setSaveError('');
-    Promise.all([
+    const saves: Promise<unknown>[] = [
       bridge.setAIKey('deepseek', deepseekKey),
-      deepseekBaseUrl ? bridge.setAIKey('deepseek-baseurl', deepseekBaseUrl) : Promise.resolve(),
+      bridge.setAIKey('deepseek-model', deepseekModel),
       bridge.setAIKey('volcengine', volcKey),
-    ]).then(() => {
+      bridge.setAIKey('volcengine-image-model', volcImageModel),
+    ];
+    if (deepseekBaseUrl) saves.push(bridge.setAIKey('deepseek-baseurl', deepseekBaseUrl));
+    Promise.all(saves).then(() => {
       setShowSaved(true);
       onSaved?.();
       setTimeout(() => setShowSaved(false), 2000);
@@ -178,6 +185,16 @@ export const AISettings: React.FC<Props> = ({ onSaved }) => {
             placeholder="https://api.deepseek.com/v1"
           />
         </div>
+        <div style={field}>
+          <label style={label}>模型名称</label>
+          <input
+            style={input}
+            value={deepseekModel}
+            onChange={(e) => setDeepseekModel(e.target.value)}
+            placeholder="deepseek-chat"
+          />
+          <div style={hint}>默认 deepseek-chat。也可用 deepseek-reasoner 等</div>
+        </div>
         <div style={btnRow}>
           <button style={btnSecondary} onClick={testDeepSeek} disabled={dsStatus === 'testing' || !deepseekKey}>
             {dsStatus === 'testing' ? '测试中...' : '连通性测试'}
@@ -200,6 +217,16 @@ export const AISettings: React.FC<Props> = ({ onSaved }) => {
             placeholder="火山方舟 API Key..."
           />
           <div style={hint}>在火山方舟控制台 (ark.volcengine.com) 获取 API Key</div>
+        </div>
+        <div style={field}>
+          <label style={label}>图像生成接入点 ID</label>
+          <input
+            style={input}
+            value={volcImageModel}
+            onChange={(e) => setVolcImageModel(e.target.value)}
+            placeholder="ep-xxxxxxxx"
+          />
+          <div style={hint}>在火山方舟创建推理接入点后获取，如 doubao-seedream-1-0 的接入点 ID</div>
         </div>
         <div style={btnRow}>
           <button style={btnSecondary} onClick={testVolcEngine} disabled={volcStatus === 'testing' || !volcKey}>

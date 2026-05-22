@@ -6,13 +6,16 @@ import { aiKeyStore } from '../services/keystore.service';
 function getDeepSeekClient() {
   const apiKey = aiKeyStore.getKey('deepseek');
   if (!apiKey) throw new Error('DeepSeek API Key 未配置');
-  return createDeepSeekClient({ apiKey });
+  const model = aiKeyStore.getKey('deepseek-model') || undefined;
+  const baseUrl = aiKeyStore.getKey('deepseek-baseurl') || undefined;
+  return createDeepSeekClient({ apiKey, model, baseUrl });
 }
 
 function getVolcEngineClient() {
   const apiKey = aiKeyStore.getKey('volcengine');
   if (!apiKey) throw new Error('火山方舟 API Key 未配置');
-  return createVolcEngineClient({ apiKey });
+  const baseUrl = aiKeyStore.getKey('volcengine-baseurl') || undefined;
+  return createVolcEngineClient({ apiKey, baseUrl });
 }
 
 export function registerAIHandlers(): void {

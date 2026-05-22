@@ -3,6 +3,10 @@ import { useLayoutStore } from '../../stores/layout.store';
 import { useWikiStore } from '../../stores/wiki.store';
 import { useWorkspaceStore } from '../../stores/workspace.store';
 import { bridge } from '../../services/bridge';
+import { FanlibPanel } from '../Fanlib/FanlibPanel';
+import { FanlibCardEditor } from '../Fanlib/FanlibCardEditor';
+import { ImportDialog } from '../Fanlib/ImportDialog';
+import { CreateCardDialog } from '../Fanlib/CreateCardDialog';
 import type { WikiEntry } from '@astrolabe/shared';
 
 const panel: React.CSSProperties = {
@@ -49,8 +53,10 @@ const typeLabels: Record<string, string> = {
 
 export const RightPanel: React.FC = () => {
   const visible = useLayoutStore((s) => s.rightPanelVisible);
+  const rightPanelMode = useLayoutStore((s) => s.rightPanelMode);
   const wiki = useWikiStore();
   const getProjectPath = useWorkspaceStore((s) => s.getProjectPath);
+  const [showCreateCard, setShowCreateCard] = useState(false);
 
   const handleConfirm = async (index: number) => {
     const s = wiki.suggestions[index];
@@ -129,6 +135,22 @@ export const RightPanel: React.FC = () => {
   const [aiWorking, setAiWorking] = useState('');
 
   if (!visible) return null;
+
+  // Fanlib mode
+  if (rightPanelMode === 'fanlib') {
+    return (
+      <div style={panel}>
+        <div style={{ ...header, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>同人库</span>
+          <button onClick={() => setShowCreateCard(true)} style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: 16 }}>+</button>
+        </div>
+        <FanlibPanel />
+        <FanlibCardEditor />
+        <ImportDialog />
+        {showCreateCard && <CreateCardDialog onClose={() => setShowCreateCard(false)} />}
+      </div>
+    );
+  }
 
   // Show suggestion queue when there are pending items
   if (pendingCount > 0 && showSuggestions) {

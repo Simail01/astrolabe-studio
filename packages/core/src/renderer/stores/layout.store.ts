@@ -7,6 +7,7 @@ interface LayoutState {
   panelLayout: PanelLayout;
   sidebarVisible: boolean;
   rightPanelVisible: boolean;
+  rightPanelMode: 'wiki' | 'fanlib';
   bottomPanelVisible: boolean;
   settingsOpen: boolean;
   openTab: (tab: SessionTab) => void;
@@ -15,6 +16,7 @@ interface LayoutState {
   setPanelLayout: (layout: PanelLayout) => void;
   toggleSidebar: () => void;
   toggleRightPanel: () => void;
+  setRightPanelMode: (mode: 'wiki' | 'fanlib') => void;
   toggleBottomPanel: () => void;
   toggleSettings: () => void;
   openSettings: () => void;
@@ -27,6 +29,7 @@ export const useLayoutStore = create<LayoutState>((set) => ({
   panelLayout: { grid: '1x2', sizes: [0.3, 0.7] },
   sidebarVisible: true,
   rightPanelVisible: false,
+  rightPanelMode: 'wiki' as const,
   bottomPanelVisible: false,
   settingsOpen: false,
 
@@ -51,6 +54,7 @@ export const useLayoutStore = create<LayoutState>((set) => ({
   setPanelLayout: (panelLayout) => set({ panelLayout }),
   toggleSidebar: () => set((s) => ({ sidebarVisible: !s.sidebarVisible })),
   toggleRightPanel: () => set((s) => ({ rightPanelVisible: !s.rightPanelVisible })),
+  setRightPanelMode: (mode) => set({ rightPanelMode: mode }),
   toggleBottomPanel: () => set((s) => ({ bottomPanelVisible: !s.bottomPanelVisible })),
   toggleSettings: () => set((s) => ({ settingsOpen: !s.settingsOpen })),
   openSettings: () => set({ settingsOpen: true }),

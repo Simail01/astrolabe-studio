@@ -3,6 +3,7 @@ import { useLayoutStore } from '../../stores/layout.store';
 import { useWorkspaceStore } from '../../stores/workspace.store';
 import { useOutlineStore } from '../../stores/outline.store';
 import { useWikiStore } from '../../stores/wiki.store';
+import { useFanlibStore } from '../../stores/fanlib.store';
 import { CreateProjectDialog } from '../Project/CreateProjectDialog';
 import { bridge } from '../../services/bridge';
 import type { AstrolabeConfig, Outline, WikiEntry } from '@astrolabe/shared';
@@ -43,6 +44,9 @@ export const Explorer: React.FC = () => {
     }).catch(() => {});
     bridge.wikiSearch(projectPath, '').then((entries) => {
       if (entries) useWikiStore.getState().setEntries(entries as WikiEntry[]);
+    }).catch(() => {});
+    bridge.fanlibSearch(workspace.path, '').then((cards) => {
+      if (cards && Array.isArray(cards)) useFanlibStore.getState().setCards(cards as any[]);
     }).catch(() => {});
   }, [activeProject, workspace]);
 

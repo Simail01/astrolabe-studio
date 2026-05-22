@@ -21,6 +21,8 @@ export const WritingPage: React.FC = () => {
   const outline = useOutlineStore(s => s.outline);
   const wikiEntries = useWikiStore(s => s.entries);
   const getProjectPath = useWorkspaceStore(s => s.getProjectPath);
+  const workspace = useWorkspaceStore(s => s.workspace);
+  const activeProject = useWorkspaceStore(s => s.activeProject);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle');
   const selectedNode = outline?.nodes ? findNode(outline.nodes, selectedNodeId) : null;
@@ -42,7 +44,7 @@ export const WritingPage: React.FC = () => {
     if (!pp) return;
     bridge.pipelineGetOutline(pp).then(d => { if (d) useOutlineStore.getState().setOutline(d as Outline); }).catch(() => {});
     bridge.wikiSearch(pp, '').then(e => { if (e) useWikiStore.getState().setEntries(e as WikiEntry[]); }).catch(() => {});
-  }, [getProjectPath]);
+  }, [activeProject, workspace]);
 
   // Auto-save
   const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -82,6 +84,18 @@ export const WritingPage: React.FC = () => {
 
   const relevantWiki = wikiEntries.filter(e => { const t = selectedNode?.title || ''; return e.title.includes(t) || t.includes(e.title) || e.aliases?.some((a: string) => t.includes(a)); });
   const nodeList = outline?.nodes || [];
+  const projectPath = getProjectPath();
+
+  // Empty state — no workspace or no project selected
+  if (!workspace || !activeProject || !projectPath) {
+    return (
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', gap: 12 }}>
+        <div style={{ fontSize: 48, opacity: 0.3 }}>📝</div>
+        <div style={{ fontSize: 16 }}>{!workspace ? '请先打开工作区' : '请先在左侧选择一个作品'}</div>
+        <div style={{ fontSize: 13 }}>{!workspace ? '点击欢迎页的"打开文件夹"开始' : '在 Explorer 中点击作品名称'}</div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
@@ -95,6 +109,9 @@ export const WritingPage: React.FC = () => {
             borderLeft: n.id === selectedNodeId ? '2px solid var(--accent)' : '2px solid transparent',
           }}>{n.title || '未命名'}</div>
         ))}
+        {nodeList.length === 0 && (
+          <div style={{ padding: 12, fontSize: 12, color: 'var(--text-muted)' }}>暂无章节。切换到大纲模式创建大纲节点</div>
+        )}
       </div>
 
       {/* Editor */}

@@ -9,6 +9,11 @@ export class KeyStore {
 
   setKey(provider: string, value: string): void {
     this.store.set(provider, value);
+    const keys = (this.store.get('__keys__') as string[]) ?? [];
+    if (!keys.includes(provider)) {
+      keys.push(provider);
+      this.store.set('__keys__', keys);
+    }
   }
 
   getKey(provider: string): string | null {
@@ -18,14 +23,12 @@ export class KeyStore {
 
   deleteKey(provider: string): void {
     this.store.delete(provider);
+    const keys = (this.store.get('__keys__') as string[]) ?? [];
+    this.store.set('__keys__', keys.filter((k) => k !== provider));
   }
 
   listKeys(): string[] {
-    const keys: string[] = [];
-    for (const [key] of Object.entries(this.store.store)) {
-      keys.push(key);
-    }
-    return keys;
+    return (this.store.get('__keys__') as string[]) ?? [];
   }
 }
 

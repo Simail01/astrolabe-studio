@@ -11,22 +11,31 @@ function getDeepSeekClient() {
 
 export function registerAIHandlers(): void {
   ipcMain.handle('ai:text:generate', async (_event, prompt: string, systemPrompt?: string) => {
-    const client = getDeepSeekClient();
-    return client.generate(prompt, { systemPrompt });
+    try {
+      const client = getDeepSeekClient();
+      return await client.generate(prompt, { systemPrompt });
+    } catch (err) {
+      throw new Error(`AI 生成失败: ${(err as Error).message}`);
+    }
   });
 
   ipcMain.handle('ai:text:stream', async (event, prompt: string, systemPrompt?: string) => {
-    const client = getDeepSeekClient();
     const sender = event.sender;
+    try {
+      const client = getDeepSeekClient();
 
-    const callbacks: StreamCallback = {
-      onChunk: (text) => sender.send('ai:text:chunk', text),
-      onDone: (fullText) => sender.send('ai:text:done', fullText),
-      onError: (err) => sender.send('ai:text:error', err.message),
-    };
+      const callbacks: StreamCallback = {
+        onChunk: (text) => sender.send('ai:text:chunk', text),
+        onDone: (fullText) => sender.send('ai:text:done', fullText),
+        onError: (err) => sender.send('ai:text:error', err.message),
+      };
 
-    await client.generateStream(prompt, callbacks, { systemPrompt });
-    return { started: true };
+      await client.generateStream(prompt, callbacks, { systemPrompt });
+      return { started: true };
+    } catch (err) {
+      sender.send('ai:text:error', (err as Error).message);
+      return { started: false };
+    }
   });
 
   ipcMain.handle('ai:image:generate', async (_event, prompt: string) => {

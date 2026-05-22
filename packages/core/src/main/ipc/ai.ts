@@ -47,10 +47,23 @@ export function registerAIHandlers(): void {
     }
   });
 
-  ipcMain.handle('ai:image:generate', async (_event, endpointId: string, options: { prompt: string; width?: number; height?: number; seed?: number; referenceImage?: string }) => {
+  ipcMain.handle('ai:image:generate', async (_event, options: { prompt: string; model: string; size?: string; seed?: number; referenceImage?: string }) => {
     try {
       const client = getVolcEngineClient();
-      return await client.generateImage(endpointId, options);
+      if (options.referenceImage) {
+        return await client.imageToImage({
+          model: options.model,
+          prompt: options.prompt,
+          referenceImage: options.referenceImage,
+          size: options.size,
+        });
+      }
+      return await client.generateImage({
+        model: options.model,
+        prompt: options.prompt,
+        size: options.size,
+        seed: options.seed,
+      });
     } catch (err) {
       throw new Error(`图像生成失败: ${(err as Error).message}`);
     }
@@ -60,7 +73,7 @@ export function registerAIHandlers(): void {
     try {
       const client = getVolcEngineClient();
       return await client.ping();
-    } catch (err) {
+    } catch {
       return false;
     }
   });

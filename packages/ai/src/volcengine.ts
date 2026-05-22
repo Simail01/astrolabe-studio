@@ -5,33 +5,42 @@ export interface VolcEngineConfig {
 
 export interface ImageGenerateOptions {
   prompt: string;
-  negativePrompt?: string;
-  width?: number;
-  height?: number;
+  model: string;
+  size?: string;
   seed?: number;
-  referenceImage?: string;
+  outputFormat?: string;
+  watermark?: boolean;
 }
 
-export interface VideoGenerateOptions {
+export interface ImageToImageOptions {
   prompt: string;
-  duration?: number;
-  fps?: number;
-  referenceImages?: string[];
+  model: string;
+  referenceImage: string;
+  size?: string;
+  outputFormat?: string;
+  watermark?: boolean;
 }
 
 const DEFAULT_BASE_URL = 'https://ark.cn-beijing.volces.com/api/v3';
 
+interface ImageGenResponse {
+  model: string;
+  created: number;
+  data: { url: string; size: string }[];
+  usage: { generated_images: number; output_tokens: number; total_tokens: number };
+}
+
 export function createVolcEngineClient(config: VolcEngineConfig) {
   const baseUrl = config.baseUrl ?? DEFAULT_BASE_URL;
 
-  async function request(method: string, path: string, body?: Record<string, unknown>): Promise<unknown> {
+  async function request(path: string, body: Record<string, unknown>): Promise<unknown> {
     const response = await fetch(`${baseUrl}${path}`, {
-      method,
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${config.apiKey}`,
       },
-      body: body ? JSON.stringify(body) : undefined,
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
@@ -43,81 +52,51 @@ export function createVolcEngineClient(config: VolcEngineConfig) {
   }
 
   return {
-    /** 连通性测试：列出可用模型 */
+    /** 连通性测试 */
     async ping(): Promise<boolean> {
       try {
-        await request('GET', '/models');
+        await request('/images/generations', {
+          model: 'doubao-seedream-5-0-260128',
+          prompt: 'test',
+          size: '1024x1024',
+          output_format: 'png',
+          watermark: false,
+        });
         return true;
       } catch {
         return false;
       }
     },
 
-    /** 通过接入点 ID 生成图像 */
-    async generateImage(endpointId: string, options: ImageGenerateOptions): Promise<string[]> {
-      const body = {
-        model: endpointId,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: `生成一张图片：${options.prompt}${options.negativePrompt ? `。避免：${options.negativePrompt}` : ''}`,
-              },
-            ],
-          },
-        ],
-        size: `${options.width ?? 1024}x${options.height ?? 1024}`,
+    /** 文生图 */
+    async generateImage(options: ImageGenerateOptions): Promise<string[]> {
+      const body: Record<string, unknown> = {
+        model: options.model,
+        prompt: options.prompt,
+        size: options.size ?? '1024x1024',
+        output_format: options.outputFormat ?? 'png',
+        watermark: options.watermark ?? false,
       };
 
-      const data = await request('POST', '/chat/completions', body) as {
-        choices?: { message?: { content?: { image_url?: { url?: string } }[] | string } }[];
-      };
-      const content = data.choices?.[0]?.message?.content;
-      if (Array.isArray(content)) {
-        return content.map((c) => c.image_url?.url ?? '').filter(Boolean);
-      }
-      return [typeof content === 'string' ? content : ''];
+      if (options.seed) body.seed = options.seed;
+
+      const data = await request('/images/generations', body) as ImageGenResponse;
+      return data.data.map((img) => img.url);
     },
 
-    /** 图生图：基于参考图生成变体 */
-    async imageToImage(endpointId: string, sourceImage: string, options: ImageGenerateOptions): Promise<string[]> {
-      const body = {
-        model: endpointId,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'image_url',
-                image_url: { url: sourceImage },
-              },
-              {
-                type: 'text',
-                text: `基于此参考图，${options.prompt}`,
-              },
-            ],
-          },
-        ],
+    /** 图生图 */
+    async imageToImage(options: ImageToImageOptions): Promise<string[]> {
+      const body: Record<string, unknown> = {
+        model: options.model,
+        prompt: options.prompt,
+        image: options.referenceImage,
+        size: options.size ?? '1024x1024',
+        output_format: options.outputFormat ?? 'png',
+        watermark: options.watermark ?? false,
       };
 
-      const data = await request('POST', '/chat/completions', body) as {
-        choices?: { message?: { content?: { image_url?: { url?: string } }[] | string } }[];
-      };
-      const content = data.choices?.[0]?.message?.content;
-      if (Array.isArray(content)) {
-        return content.map((c) => c.image_url?.url ?? '').filter(Boolean);
-      }
-      return [];
-    },
-
-    /** 通用的聊天补全（用于 AI 辅助图像 prompt 优化等） */
-    async chat(messages: { role: string; content: string }[]): Promise<string> {
-      const data = await request('POST', '/chat/completions', { messages }) as {
-        choices?: { message?: { content?: string } }[];
-      };
-      return data.choices?.[0]?.message?.content ?? '';
+      const data = await request('/images/generations', body) as ImageGenResponse;
+      return data.data.map((img) => img.url);
     },
   };
 }

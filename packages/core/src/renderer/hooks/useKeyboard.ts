@@ -6,7 +6,7 @@ export function useKeyboard(): void {
     const handleKeyDown = (e: KeyboardEvent) => {
       const mod = e.ctrlKey || e.metaKey;
 
-      if (mod && e.shiftKey && (e.key === 'p' || e.key === 'P')) {
+      if (mod && e.shiftKey && e.key.toLowerCase() === 'p') {
         e.preventDefault();
         useCommandStore.getState().togglePalette();
         return;
@@ -22,7 +22,7 @@ export function useKeyboard(): void {
           mods.includes('Ctrl') === mod &&
           mods.includes('Shift') === e.shiftKey &&
           mods.includes('Alt') === e.altKey;
-        if (modMatch && key === e.key) {
+        if (modMatch && key.toLowerCase() === e.key.toLowerCase()) {
           e.preventDefault();
           store.executeCommand(cmd.id);
           return;

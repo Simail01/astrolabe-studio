@@ -6,6 +6,7 @@ import { RightPanel } from './components/RightPanel/RightPanel';
 import { BottomPanel } from './components/BottomPanel/BottomPanel';
 import { StatusBar } from './components/StatusBar/StatusBar';
 import { CommandPalette } from './components/CommandPalette/CommandPalette';
+import { Explorer } from './components/Explorer/Explorer';
 import { useLayoutStore } from './stores/layout.store';
 import { useKeyboard } from './hooks/useKeyboard';
 
@@ -54,6 +55,7 @@ export const App: React.FC = () => {
       </div>
       <div style={MAIN}>
         <ActivityBar />
+        <Explorer />
         <div style={CENTER}>
           <TabBar />
           <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>

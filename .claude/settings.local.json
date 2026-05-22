@@ -9,7 +9,8 @@
       "Bash(npx tsc *)",
       "Bash(npx vite *)",
       "Bash(./node_modules/.bin/vite --version)",
-      "Bash(npx vitest *)"
+      "Bash(npx vitest *)",
+      "Bash(npx electron *)"
     ]
   }
 }

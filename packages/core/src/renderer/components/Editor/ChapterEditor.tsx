@@ -79,31 +79,44 @@ export const ChapterEditor: React.FC<Props> = () => {
             disabled={aiGenerating}
             onClick={async () => {
               setAiGenerating(true);
+              const startContent = useChapterStore.getState().content;
+              let streamedText = '';
+
+              // 先注册监听，再发起流式调用
+              const unsubChunk = bridge.onAIChunk((text: string) => {
+                streamedText += text;
+                setContent(startContent + streamedText);
+              });
+
+              const unsubDone = bridge.onAIDone((_fullText: string) => {
+                unsubChunk();
+                unsubDone();
+                unsubError();
+                setAiGenerating(false);
+              });
+
+              const unsubError = bridge.onAIError((err: string) => {
+                unsubChunk();
+                unsubDone();
+                unsubError();
+                setAiGenerating(false);
+                // 保留部分已生成的内容，不丢失
+                if (streamedText) {
+                  setContent(startContent + streamedText + '\n\n[AI 生成中断: ' + err + ']');
+                }
+              });
+
               try {
-                const systemPrompt = `你是一位专业小说作家。请根据以下大纲节点续写章节内容。不要重复已有内容，保持风格一致。\n\n大纲节点：${selectedNode?.title}\n概要：${selectedNode?.summary || '无'}`;
+                const systemPrompt = `你是一位专业小说作家。请根据以下大纲节点续写章节内容。保持风格一致，适度展开。\n\n大纲节点：${selectedNode?.title}\n概要：${selectedNode?.summary || '无'}`;
 
                 await bridge.generateTextStream(
-                  content ? `请续写以下内容：\n\n${content.slice(-500)}` : `请撰写章节：${selectedNode?.title}`,
+                  startContent ? `请续写以下内容：\n\n${startContent.slice(-500)}` : `请撰写章节：${selectedNode?.title}`,
                   systemPrompt
                 );
-
-                let streamedText = '';
-                bridge.onAIChunk((text: string) => {
-                  streamedText += text;
-                  setContent(content + streamedText);
-                });
-
-                bridge.onAIDone((fullText: string) => {
-                  setContent(content + fullText);
-                  setAiGenerating(false);
-                });
-
-                bridge.onAIError((err: string) => {
-                  console.error('AI writing error:', err);
-                  setAiGenerating(false);
-                });
-              } catch (err) {
-                console.error('AI writing failed:', err);
+              } catch (_err) {
+                unsubChunk();
+                unsubDone();
+                unsubError();
                 setAiGenerating(false);
               }
             }}

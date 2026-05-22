@@ -1,4 +1,11 @@
 import React from 'react';
+import { ActivityBar } from './components/ActivityBar/ActivityBar';
+import { TabBar } from './components/TabBar/TabBar';
+import { EditorArea } from './components/EditorArea/EditorArea';
+import { RightPanel } from './components/RightPanel/RightPanel';
+import { BottomPanel } from './components/BottomPanel/BottomPanel';
+import { StatusBar } from './components/StatusBar/StatusBar';
+import { useLayoutStore } from './stores/layout.store';
 
 const SHELL: React.CSSProperties = {
   display: 'flex',
@@ -15,6 +22,7 @@ const MENUBAR: React.CSSProperties = {
   alignItems: 'center',
   paddingLeft: 12,
   fontSize: 13,
+  gap: 16,
 };
 
 const MAIN: React.CSSProperties = {
@@ -23,24 +31,38 @@ const MAIN: React.CSSProperties = {
   overflow: 'hidden',
 };
 
-const STATUSBAR: React.CSSProperties = {
-  height: 24,
-  backgroundColor: '#007acc',
+const CENTER: React.CSSProperties = {
   display: 'flex',
-  alignItems: 'center',
-  paddingLeft: 12,
-  fontSize: 12,
-  color: '#ffffff',
+  flexDirection: 'column',
+  flex: 1,
+  overflow: 'hidden',
 };
 
 export const App: React.FC = () => {
+  const bottomVisible = useLayoutStore((s) => s.bottomPanelVisible);
+
   return (
     <div style={SHELL}>
-      <div style={MENUBAR}>文件 编辑 视图 帮助</div>
-      <div style={MAIN}>
-        {/* ActivityBar / Explorer / Editor / RightPanel / BottomPanel gradually filled in */}
+      <div style={MENUBAR}>
+        <span>文件</span>
+        <span>编辑</span>
+        <span>视图</span>
+        <span>帮助</span>
       </div>
-      <div style={STATUSBAR}>星盘工坊 v0.0.1</div>
+      <div style={MAIN}>
+        <ActivityBar />
+        <div style={CENTER}>
+          <TabBar />
+          <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <EditorArea />
+              {bottomVisible && <BottomPanel />}
+            </div>
+            <RightPanel />
+          </div>
+        </div>
+      </div>
+      <StatusBar />
     </div>
   );
 };

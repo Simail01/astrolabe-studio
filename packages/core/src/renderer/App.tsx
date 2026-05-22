@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityBar } from './components/ActivityBar/ActivityBar';
 import { TabBar } from './components/TabBar/TabBar';
 import { EditorArea } from './components/EditorArea/EditorArea';
@@ -8,6 +8,7 @@ import { StatusBar } from './components/StatusBar/StatusBar';
 import { CommandPalette } from './components/CommandPalette/CommandPalette';
 import { Explorer } from './components/Explorer/Explorer';
 import { WorkspaceDialog } from './components/Workspace/WorkspaceDialog';
+import { SettingsPanel } from './components/Settings/SettingsPanel';
 import { useLayoutStore } from './stores/layout.store';
 import { useWorkspaceStore } from './stores/workspace.store';
 import { useKeyboard } from './hooks/useKeyboard';
@@ -49,7 +50,9 @@ export const App: React.FC = () => {
   useKeyboard();
   const bottomVisible = useLayoutStore((s) => s.bottomPanelVisible);
 
-  // Session restore: auto-load last workspace on startup
+  const [firstRun, setFirstRun] = useState(false);
+
+  // Session restore + first-run key check
   useEffect(() => {
     bridge.getLastWorkspace().then((wsPath) => {
       if (wsPath && typeof wsPath === 'string') {
@@ -58,11 +61,17 @@ export const App: React.FC = () => {
         });
       }
     });
+    // Check if DeepSeek key is configured
+    bridge.getAIKey('deepseek').then((key) => {
+      if (!key) setFirstRun(true);
+    });
   }, []);
 
   return (
     <div style={SHELL}>
       <WorkspaceDialog />
+      <SettingsPanel />
+      <SettingsPanel forceOpen={firstRun} onKeyConfigured={() => setFirstRun(false)} />
       <div style={MENUBAR}>
         <span>文件</span>
         <span>编辑</span>

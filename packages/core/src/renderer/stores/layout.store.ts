@@ -8,6 +8,7 @@ interface LayoutState {
   sidebarVisible: boolean;
   rightPanelVisible: boolean;
   bottomPanelVisible: boolean;
+  settingsOpen: boolean;
   openTab: (tab: SessionTab) => void;
   closeTab: (filePath: string) => void;
   setActiveTab: (filePath: string) => void;
@@ -15,6 +16,8 @@ interface LayoutState {
   toggleSidebar: () => void;
   toggleRightPanel: () => void;
   toggleBottomPanel: () => void;
+  toggleSettings: () => void;
+  openSettings: () => void;
 }
 
 export const useLayoutStore = create<LayoutState>((set) => ({
@@ -24,6 +27,7 @@ export const useLayoutStore = create<LayoutState>((set) => ({
   sidebarVisible: true,
   rightPanelVisible: false,
   bottomPanelVisible: false,
+  settingsOpen: false,
 
   openTab: (tab) =>
     set((state) => {
@@ -47,4 +51,6 @@ export const useLayoutStore = create<LayoutState>((set) => ({
   toggleSidebar: () => set((s) => ({ sidebarVisible: !s.sidebarVisible })),
   toggleRightPanel: () => set((s) => ({ rightPanelVisible: !s.rightPanelVisible })),
   toggleBottomPanel: () => set((s) => ({ bottomPanelVisible: !s.bottomPanelVisible })),
+  toggleSettings: () => set((s) => ({ settingsOpen: !s.settingsOpen })),
+  openSettings: () => set({ settingsOpen: true }),
 }));

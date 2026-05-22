@@ -24,7 +24,7 @@ const bottomItems = [
 ];
 
 export const ActivityBar: React.FC = () => {
-  const { sidebarVisible, toggleSidebar } = useLayoutStore();
+  const { sidebarVisible, settingsOpen, toggleSidebar, toggleSettings } = useLayoutStore();
 
   return (
     <div style={container}>
@@ -45,8 +45,10 @@ export const ActivityBar: React.FC = () => {
           key={item.id}
           icon={item.icon}
           label={item.label}
-          active={false}
-          onClick={() => {}}
+          active={item.id === 'settings' ? settingsOpen : false}
+          onClick={() => {
+            if (item.id === 'settings') toggleSettings();
+          }}
         />
       ))}
     </div>

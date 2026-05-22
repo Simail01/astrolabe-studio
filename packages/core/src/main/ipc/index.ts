@@ -3,6 +3,7 @@ import { registerProjectHandlers } from './project';
 import { registerSessionHandlers } from './session';
 import { registerExportHandlers } from './export';
 import { registerAIHandlers } from './ai';
+import { registerWikiHandlers } from './wiki';
 
 export function registerAllHandlers(): void {
   registerFileHandlers();
@@ -10,4 +11,5 @@ export function registerAllHandlers(): void {
   registerSessionHandlers();
   registerExportHandlers();
   registerAIHandlers();
+  registerWikiHandlers();
 }

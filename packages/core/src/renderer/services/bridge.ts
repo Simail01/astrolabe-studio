@@ -40,4 +40,12 @@ export const bridge = {
   getAIKey: (provider: string) => api.invoke('ai:keys:get', provider) as Promise<string | null>,
   listAIKeys: () => api.invoke('ai:keys:list') as Promise<string[]>,
   deleteAIKey: (provider: string) => api.invoke('ai:keys:delete', provider) as Promise<void>,
+
+  // Wiki
+  wikiSave: (projectPath: string, entry: unknown) => api.invoke('wiki:save', projectPath, entry) as Promise<void>,
+  wikiGet: (projectPath: string, type: string, id: string) => api.invoke('wiki:get', projectPath, type, id) as Promise<unknown>,
+  wikiList: (projectPath: string, type?: string) => api.invoke('wiki:list', projectPath, type) as Promise<unknown[]>,
+  wikiDelete: (projectPath: string, type: string, id: string) => api.invoke('wiki:delete', projectPath, type, id) as Promise<void>,
+  wikiSearch: (projectPath: string, query: string) => api.invoke('wiki:search', projectPath, query) as Promise<unknown[]>,
+  wikiRelated: (projectPath: string, entryId: string) => api.invoke('wiki:related', projectPath, entryId) as Promise<unknown[]>,
 };

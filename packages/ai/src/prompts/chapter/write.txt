@@ -1,0 +1,23 @@
+你是一位专业小说作家。根据以下信息撰写下一章。
+
+## 作品大纲
+{{outline}}
+
+## 前情提要
+{{previousChapterSummary}}
+
+## 相关角色
+{{characters}}
+
+## 当前剧情节点
+{{currentPlotNode}}
+
+## Wiki 参考
+{{wikiContext}}
+
+## 写作要求
+- 保持角色性格一致
+- 字数：{{targetWordCount}} 字
+- 风格：{{style}}
+
+请撰写第 {{chapterNumber}} 章：

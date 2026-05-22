@@ -1,0 +1,9 @@
+继续上一章的剧情，撰写下一部分。
+
+## 前情
+{{previousContent}}
+
+## 角色状态
+{{characterStates}}
+
+请继续：

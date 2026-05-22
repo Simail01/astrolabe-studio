@@ -81,16 +81,16 @@ export const ComicPage: React.FC = () => {
 
   if (!projectPath || !selectedNodeId) {
     return (
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', gap: 12 }}>
+      <div style={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', backgroundColor: 'var(--bg-base)', gap: 12 }}>
         <div style={{ fontSize: 48, opacity: 0.3 }}>🎨</div>
         <div style={{ fontSize: 16 }}>{!projectPath ? '请先打开工作区并选择作品' : '请在大纲中选择一个章节节点'}</div>
-        <div style={{ fontSize: 13 }}>漫画页面基于分镜数据生成，请先在视觉化模式中完成分镜拆解</div>
+        <div style={{ fontSize: 13 }}>{!projectPath ? '' : '请先在创作/大纲模式中选中章节，或在视觉化/分镜中完成分镜拆解'}</div>
       </div>
     );
   }
 
   return (
-    <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+    <div style={{ height: '100%', display: 'flex', overflow: 'hidden', backgroundColor: 'var(--bg-base)' }}>
       {/* Main canvas */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 16, overflow: 'auto' }}>
         <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>

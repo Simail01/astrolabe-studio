@@ -59,4 +59,23 @@ describe('useWikiStore', () => {
     useWikiStore.getState().setSearchQuery('');
     expect(useWikiStore.getState().filteredEntries).toHaveLength(2);
   });
+
+  it('manages suggestion queue', () => {
+    const suggestions = [
+      { type: 'person' as const, title: '诸葛亮', summary: '', content: '', attributes: {}, confidence: 0.95, evidence: '...' },
+      { type: 'location' as const, title: '卧龙岗', summary: '', content: '', attributes: {}, confidence: 0.9, evidence: '...' },
+    ];
+    useWikiStore.getState().setSuggestions(suggestions);
+    expect(useWikiStore.getState().suggestions).toHaveLength(2);
+    expect(useWikiStore.getState().suggestions[0].status).toBe('pending');
+
+    useWikiStore.getState().confirmSuggestion(0);
+    expect(useWikiStore.getState().suggestions[0].status).toBe('confirmed');
+
+    useWikiStore.getState().rejectSuggestion(1);
+    expect(useWikiStore.getState().suggestions[1].status).toBe('rejected');
+
+    useWikiStore.getState().clearSuggestions();
+    expect(useWikiStore.getState().suggestions).toHaveLength(0);
+  });
 });

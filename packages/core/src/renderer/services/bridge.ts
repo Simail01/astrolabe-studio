@@ -36,7 +36,7 @@ export const bridge = {
   generateText: (prompt: string, systemPrompt?: string) => api.invoke('ai:text:generate', prompt, systemPrompt) as Promise<string>,
   generateTextStream: (prompt: string, systemPrompt?: string) => api.invoke('ai:text:stream', prompt, systemPrompt) as Promise<{ started: boolean }>,
   generateImage: (options: { prompt: string; model: string; size?: string; seed?: number; referenceImage?: string }) => api.invoke('ai:image:generate', options) as Promise<string[]>,
-  pingVolcEngine: () => api.invoke('ai:volc:ping') as Promise<boolean>,
+  pingVolcEngine: () => api.invoke('ai:volc:ping') as Promise<{ ok: boolean; error?: string }>,
   onAIChunk: (callback: (text: string) => void) => api.on('ai:text:chunk', callback as (...args: unknown[]) => void),
   onAIDone: (callback: (fullText: string) => void) => api.on('ai:text:done', callback as (...args: unknown[]) => void),
   onAIError: (callback: (error: string) => void) => api.on('ai:text:error', callback as (...args: unknown[]) => void),

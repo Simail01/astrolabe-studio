@@ -78,8 +78,8 @@ export function createVolcEngineClient(config: VolcEngineConfig) {
   }
 
   return {
-    /** 连通性测试：用最小参数调用接口 */
-    async ping(): Promise<boolean> {
+    /** 连通性测试：返回 { ok, error? } */
+    async ping(): Promise<{ ok: boolean; error?: string }> {
       try {
         await request('/images/generations', {
           model: 'doubao-seedream-5-0-260128',
@@ -90,9 +90,9 @@ export function createVolcEngineClient(config: VolcEngineConfig) {
           stream: false,
           watermark: false,
         });
-        return true;
-      } catch {
-        return false;
+        return { ok: true };
+      } catch (e) {
+        return { ok: false, error: (e as Error).message };
       }
     },
 

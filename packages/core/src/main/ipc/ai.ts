@@ -73,8 +73,8 @@ export function registerAIHandlers(): void {
     try {
       const client = getVolcEngineClient();
       return await client.ping();
-    } catch {
-      return false;
+    } catch (e) {
+      return { ok: false, error: (e as Error).message };
     }
   });
 

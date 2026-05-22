@@ -51,6 +51,72 @@ const typeLabels: Record<string, string> = {
   person: '角色', location: '地点', faction: '势力', item: '物品', event: '事件', rule: '规则',
 };
 
+// Inline Wiki detail with edit/delete
+const WikiDetail: React.FC<{ entry: WikiEntry }> = ({ entry: initialEntry }) => {
+  const getProjectPath = useWorkspaceStore((s) => s.getProjectPath);
+  const [editing, setEditing] = useState(false);
+  const [title, setTitle] = useState(initialEntry.title);
+  const [summary, setSummary] = useState(initialEntry.summary || '');
+  const [content, setContent] = useState(initialEntry.content || '');
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    const projectPath = getProjectPath();
+    if (!projectPath) return;
+    setSaving(true);
+    try {
+      const updated = { ...initialEntry, title, summary, content, updatedAt: new Date().toISOString() };
+      await bridge.wikiSave(projectPath, updated);
+      useWikiStore.getState().addOrUpdateEntry(updated);
+      setEditing(false);
+    } catch (e) { console.error(e); }
+    finally { setSaving(false); }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm(`确定删除条目「${initialEntry.title}」？`)) return;
+    const projectPath = getProjectPath();
+    if (!projectPath) return;
+    try {
+      await bridge.wikiDelete(projectPath, initialEntry.type, initialEntry.id);
+      useWikiStore.getState().removeEntry(initialEntry.id);
+    } catch (e) { console.error(e); }
+  };
+
+  if (editing) {
+    return (
+      <div style={{ ...detail, borderTop: '1px solid #3c3c3c' }}>
+        <div style={field}><div style={fieldLabel}>标题</div><input value={title} onChange={e => setTitle(e.target.value)} style={{ width: '100%', padding: '4px 6px', fontSize: 13, backgroundColor: '#3c3c3c', border: '1px solid #555', color: '#fff', borderRadius: 3, outline: 'none' }} /></div>
+        <div style={field}><div style={fieldLabel}>摘要</div><input value={summary} onChange={e => setSummary(e.target.value)} style={{ width: '100%', padding: '4px 6px', fontSize: 13, backgroundColor: '#3c3c3c', border: '1px solid #555', color: '#fff', borderRadius: 3, outline: 'none' }} /></div>
+        <div style={field}><div style={fieldLabel}>详情</div><textarea value={content} onChange={e => setContent(e.target.value)} style={{ width: '100%', padding: '4px 6px', fontSize: 13, backgroundColor: '#3c3c3c', border: '1px solid #555', color: '#fff', borderRadius: 3, outline: 'none', resize: 'vertical', minHeight: 60, fontFamily: 'inherit' }} /></div>
+        <div style={{ display: 'flex', gap: 4 }}>
+          <button onClick={handleSave} disabled={saving} style={{ padding: '4px 12px', fontSize: 12, backgroundColor: '#007acc', color: '#fff', border: 'none', borderRadius: 3, cursor: 'pointer' }}>{saving ? '保存中...' : '保存'}</button>
+          <button onClick={() => setEditing(false)} style={{ padding: '4px 12px', fontSize: 12, backgroundColor: '#3c3c3c', color: '#ccc', border: 'none', borderRadius: 3, cursor: 'pointer' }}>取消</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ ...detail, borderTop: '1px solid #3c3c3c' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <div style={{ fontSize: 15, color: '#fff' }}>{initialEntry.title}</div>
+        <div style={{ display: 'flex', gap: 4 }}>
+          <button onClick={() => { setTitle(initialEntry.title); setSummary(initialEntry.summary || ''); setContent(initialEntry.content || ''); setEditing(true); }} style={{ padding: '2px 8px', fontSize: 11, backgroundColor: '#3c3c3c', color: '#ccc', border: 'none', borderRadius: 3, cursor: 'pointer' }}>编辑</button>
+          <button onClick={handleDelete} style={{ padding: '2px 8px', fontSize: 11, backgroundColor: '#5a1d1d', color: '#f44747', border: 'none', borderRadius: 3, cursor: 'pointer' }}>删除</button>
+        </div>
+      </div>
+      {initialEntry.summary && <div style={field}><div style={fieldLabel}>摘要</div><div style={fieldValue}>{initialEntry.summary}</div></div>}
+      {initialEntry.content && <div style={field}><div style={fieldLabel}>详情</div><div style={fieldValue}>{initialEntry.content}</div></div>}
+      {initialEntry.relations?.length > 0 && (
+        <div style={field}><div style={fieldLabel}>关联</div>
+          {initialEntry.relations.map((r, i) => <div key={i} style={{ fontSize: 12, color: '#4ec9b0', marginBottom: 2 }}>{r.relationType} → {r.targetId}</div>)}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const RightPanel: React.FC = () => {
   const visible = useLayoutStore((s) => s.rightPanelVisible);
   const rightPanelMode = useLayoutStore((s) => s.rightPanelMode);
@@ -296,31 +362,7 @@ export const RightPanel: React.FC = () => {
         )}
       </div>
       {entry && (
-        <div style={{ ...detail, borderTop: '1px solid #3c3c3c' }}>
-          <div style={{ fontSize: 15, color: '#fff', marginBottom: 8 }}>{entry.title}</div>
-          {entry.summary && (
-            <div style={field}>
-              <div style={fieldLabel}>摘要</div>
-              <div style={fieldValue}>{entry.summary}</div>
-            </div>
-          )}
-          {entry.content && (
-            <div style={field}>
-              <div style={fieldLabel}>详情</div>
-              <div style={fieldValue}>{entry.content}</div>
-            </div>
-          )}
-          {entry.relations?.length > 0 && (
-            <div style={field}>
-              <div style={fieldLabel}>关联</div>
-              {entry.relations.map((r, i) => (
-                <div key={i} style={{ fontSize: 12, color: '#4ec9b0', marginBottom: 2 }}>
-                  {r.relationType} → {r.targetId}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <WikiDetail entry={entry} />
       )}
     </div>
   );

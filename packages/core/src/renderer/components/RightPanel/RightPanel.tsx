@@ -1,6 +1,9 @@
 import React from 'react';
 import { useLayoutStore } from '../../stores/layout.store';
 import { useWikiStore } from '../../stores/wiki.store';
+import { useWorkspaceStore } from '../../stores/workspace.store';
+import { bridge } from '../../services/bridge';
+import type { WikiEntry } from '@astrolabe/shared';
 
 const panel: React.CSSProperties = {
   width: 280, minWidth: 200, backgroundColor: '#252526', borderLeft: '1px solid #3c3c3c',
@@ -47,6 +50,37 @@ const typeLabels: Record<string, string> = {
 export const RightPanel: React.FC = () => {
   const visible = useLayoutStore((s) => s.rightPanelVisible);
   const wiki = useWikiStore();
+  const getProjectPath = useWorkspaceStore((s) => s.getProjectPath);
+
+  const handleConfirm = async (index: number) => {
+    const s = wiki.suggestions[index];
+    if (!s || s.status !== 'pending') return;
+    const projectPath = getProjectPath();
+    if (!projectPath) return;
+
+    const entry: WikiEntry = {
+      id: `wiki-${Date.now()}-${index}`,
+      type: s.type,
+      title: s.title,
+      aliases: [],
+      summary: s.summary || '',
+      content: s.content || '',
+      attributes: s.attributes || {},
+      relations: [],
+      sourceChapters: [],
+      confidence: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      confirmedByUser: true,
+    };
+    try {
+      await bridge.wikiSave(projectPath, entry);
+      wiki.confirmSuggestion(index);
+      wiki.addOrUpdateEntry(entry);
+    } catch (e) {
+      console.error('Wiki save failed:', e);
+    }
+  };
   const {
     filteredEntries, selectedEntryId, searchQuery, setSearchQuery, selectEntry,
     suggestions, confirmSuggestion, rejectSuggestion, clearSuggestions,
@@ -88,7 +122,7 @@ export const RightPanel: React.FC = () => {
                 置信度: {Math.round(s.confidence * 100)}%
               </div>
               <div style={suggBtns}>
-                <button style={btnConfirm} onClick={() => confirmSuggestion(i)}>确认</button>
+                <button style={btnConfirm} onClick={() => handleConfirm(i)}>确认</button>
                 <button style={btnReject} onClick={() => rejectSuggestion(i)}>拒绝</button>
               </div>
             </div>

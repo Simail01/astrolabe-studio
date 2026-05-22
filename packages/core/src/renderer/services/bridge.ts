@@ -60,4 +60,15 @@ export const bridge = {
   designSave: (projectPath: string, characterId: string, design: unknown) => api.invoke('design:save', projectPath, characterId, design) as Promise<void>,
   designGet: (projectPath: string, characterId: string) => api.invoke('design:get', projectPath, characterId) as Promise<unknown>,
   designList: (projectPath: string, characterId: string) => api.invoke('design:list', projectPath, characterId) as Promise<string[]>,
+
+  // Pipeline
+  pipelineSaveOutline: (projectPath: string, outline: unknown) => api.invoke('pipeline:saveOutline', projectPath, outline) as Promise<void>,
+  pipelineGetOutline: (projectPath: string) => api.invoke('pipeline:getOutline', projectPath) as Promise<unknown>,
+  pipelineSaveChapter: (projectPath: string, chapter: unknown) => api.invoke('pipeline:saveChapter', projectPath, chapter) as Promise<void>,
+  pipelineGetChapter: (projectPath: string, chapterId: string) => api.invoke('pipeline:getChapter', projectPath, chapterId) as Promise<unknown>,
+  pipelineListChapters: (projectPath: string) => api.invoke('pipeline:listChapters', projectPath) as Promise<string[]>,
+  pipelineSaveStoryboard: (projectPath: string, storyboard: unknown) => api.invoke('pipeline:saveStoryboard', projectPath, storyboard) as Promise<void>,
+  pipelineGetStoryboard: (projectPath: string, chapterId: string) => api.invoke('pipeline:getStoryboard', projectPath, chapterId) as Promise<unknown>,
+  pipelineSaveState: (projectPath: string, state: unknown) => api.invoke('pipeline:saveState', projectPath, state) as Promise<void>,
+  pipelineGetState: (projectPath: string) => api.invoke('pipeline:getState', projectPath) as Promise<unknown>,
 };

@@ -3,7 +3,8 @@ import { useChapterStore } from '../../stores/chapter.store';
 import { useOutlineStore } from '../../stores/outline.store';
 import { useWorkspaceStore } from '../../stores/workspace.store';
 import { bridge } from '../../services/bridge';
-import type { OutlineNode, Chapter } from '@astrolabe/shared';
+import { useWikiStore } from '../../stores/wiki.store';
+import type { OutlineNode, Chapter, WikiEntry } from '@astrolabe/shared';
 
 const container: React.CSSProperties = {
   display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#1e1e1e',
@@ -189,7 +190,21 @@ export const ChapterEditor: React.FC<Props> = () => {
               });
 
               try {
-                const systemPrompt = `你是一位专业小说作家。请根据以下大纲节点续写章节内容。保持风格一致，适度展开。\n\n大纲节点：${selectedNode?.title}\n概要：${selectedNode?.summary || '无'}`;
+                // Assemble Wiki context
+                const wikiEntries = useWikiStore.getState().entries;
+                const nodeTitle = selectedNode?.title || '';
+                const relevantWiki = wikiEntries.filter((e: WikiEntry) =>
+                  e.title.includes(nodeTitle) ||
+                  nodeTitle.includes(e.title) ||
+                  e.aliases.some((a: string) => nodeTitle.includes(a))
+                );
+                const wikiContext = relevantWiki.length > 0
+                  ? '\n\n## Wiki 知识库参考\n' + relevantWiki.map((e: WikiEntry) =>
+                      `【${e.title}】(${e.type})\n${e.summary || e.content || ''}`
+                    ).join('\n\n')
+                  : '';
+
+                const systemPrompt = `你是一位专业小说作家。请根据以下大纲节点续写章节内容。保持风格一致，适度展开。\n\n大纲节点：${selectedNode?.title}\n概要：${selectedNode?.summary || '无'}${wikiContext}`;
 
                 await bridge.generateTextStream(
                   startContent ? `请续写以下内容：\n\n${startContent.slice(-500)}` : `请撰写章节：${selectedNode?.title}`,

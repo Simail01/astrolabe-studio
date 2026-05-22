@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useLayoutStore } from '../../stores/layout.store';
 import { useWorkspaceStore } from '../../stores/workspace.store';
 import { useOutlineStore } from '../../stores/outline.store';
+import { useWikiStore } from '../../stores/wiki.store';
 import { CreateProjectDialog } from '../Project/CreateProjectDialog';
 import { bridge } from '../../services/bridge';
-import type { AstrolabeConfig, Outline } from '@astrolabe/shared';
+import type { AstrolabeConfig, Outline, WikiEntry } from '@astrolabe/shared';
 
 const panel: React.CSSProperties = {
   width: 260, minWidth: 200, backgroundColor: '#252526', display: 'flex', flexDirection: 'column', overflow: 'hidden',
@@ -33,14 +34,15 @@ export const Explorer: React.FC = () => {
     color: '#fff',
   };
 
-  // When active project changes, load its outline from disk
+  // When active project changes, load outline and wiki from disk
   useEffect(() => {
     if (!workspace || !activeProject) return;
     const projectPath = `${workspace.path}/${activeProject}`;
     bridge.pipelineGetOutline(projectPath).then((data) => {
-      if (data) {
-        useOutlineStore.getState().setOutline(data as Outline);
-      }
+      if (data) useOutlineStore.getState().setOutline(data as Outline);
+    }).catch(() => {});
+    bridge.wikiSearch(projectPath, '').then((entries) => {
+      if (entries) useWikiStore.getState().setEntries(entries as WikiEntry[]);
     }).catch(() => {});
   }, [activeProject, workspace]);
 

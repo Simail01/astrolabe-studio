@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLayoutStore } from '../../stores/layout.store';
 import { useWorkspaceStore } from '../../stores/workspace.store';
+import { CreateProjectDialog } from '../Project/CreateProjectDialog';
+import type { AstrolabeConfig } from '@astrolabe/shared';
 
 const panel: React.CSSProperties = {
   width: 260, minWidth: 200, backgroundColor: '#252526', display: 'flex', flexDirection: 'column', overflow: 'hidden',
@@ -19,12 +21,24 @@ const fileIcon: React.CSSProperties = { fontSize: 14 };
 export const Explorer: React.FC = () => {
   const sidebarVisible = useLayoutStore((s) => s.sidebarVisible);
   const workspace = useWorkspaceStore((s) => s.workspace);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   if (!sidebarVisible) return null;
 
   return (
     <div style={panel}>
-      <div style={title}>{workspace ? workspace.name : '资源管理器'}</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 8px' }}>
+        <div style={title}>{workspace ? workspace.name : '资源管理器'}</div>
+        {workspace && (
+          <button
+            onClick={() => setShowCreateDialog(true)}
+            style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: 16, padding: '2px 4px' }}
+            title="新建作品"
+          >
+            +
+          </button>
+        )}
+      </div>
       <div style={list}>
         {workspace && workspace.projects.length > 0 ? (
           workspace.projects.map((name) => (
@@ -39,6 +53,21 @@ export const Explorer: React.FC = () => {
           </div>
         )}
       </div>
+
+      {showCreateDialog && (
+        <CreateProjectDialog
+          onClose={() => setShowCreateDialog(false)}
+          onCreated={(project: AstrolabeConfig) => {
+            const ws = useWorkspaceStore.getState().workspace;
+            if (ws) {
+              useWorkspaceStore.getState().setWorkspace({
+                ...ws,
+                projects: [...ws.projects, project.title],
+              });
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

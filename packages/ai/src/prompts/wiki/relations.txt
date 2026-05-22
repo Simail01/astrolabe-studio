@@ -1,0 +1,22 @@
+你是一位小说编辑助理。请分析各章节中 Wiki 条目间的互动关系。
+
+## Wiki 条目列表
+{{wikiEntries}}
+
+## 各章节内容
+{{allChapters}}
+
+## 请分析条目间的关系类型
+- 师徒、结义、上下级、敌对、血缘、盟友、恋人、其他
+
+## 输出 JSON
+[{
+  "sourceTitle": "条目A名称",
+  "targetTitle": "条目B名称",
+  "relationType": "关系类型",
+  "confidence": 0.85,
+  "evidence": "原文依据",
+  "sourceChapter": "第X章"
+}]
+
+只输出 JSON 数组。confidence < 0.5 的不输出。

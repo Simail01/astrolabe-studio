@@ -1,0 +1,27 @@
+你是一位小说校对员。请对比以下 Wiki 设定与各章节描述，查找矛盾。
+
+## Wiki 条目及其属性
+{{wikiEntries}}
+
+## 各章节内容
+{{allChapters}}
+
+## 请检查
+1. 角色生死状态是否前后一致
+2. 角色外貌/性格/能力描述是否矛盾
+3. 地点/物品描述是否冲突
+4. 时间线是否合理（同角色同时出现在两地）
+
+## 输出 JSON
+[{
+  "entryTitle": "条目名",
+  "field": "矛盾属性",
+  "chapterA": "第X章",
+  "valueA": "描述A",
+  "chapterB": "第Y章",
+  "valueB": "描述B",
+  "severity": "critical|warning|info",
+  "suggestion": "修改建议"
+}]
+
+只输出 JSON 数组。severity 分级：critical=生死/存在性矛盾，warning=属性明显不一致，info=时间线/位置可疑。

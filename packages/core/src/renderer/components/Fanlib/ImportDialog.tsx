@@ -37,14 +37,16 @@ export const ImportDialog: React.FC = () => {
   const [adapting, setAdapting] = useState(false);
   const [adaptations, setAdaptations] = useState<any[] | null>(null);
   const [adaptedAttrs, setAdaptedAttrs] = useState<Record<string, string>>({});
+  const [error, setError] = useState('');
 
   if (!importDialogOpen || !card) return null;
 
   const projectPath = workspace && activeProject ? `${workspace.path}/${activeProject}` : null;
 
   const handleImport = async (useAdapted: boolean) => {
-    if (!projectPath || !card) return;
+    if (!projectPath || !card) { setError('未选择目标作品'); return; }
     setImporting(true);
+    setError('');
     try {
       const attrs: Record<string, string> = { 来源: card.source?.title || '' };
       if (useAdapted && adaptations) {
@@ -76,17 +78,22 @@ export const ImportDialog: React.FC = () => {
       setAdaptations(null);
       setAdaptedAttrs({});
     } catch (e) {
-      console.error('Import failed:', e);
+      setError('引入失败: ' + (e as Error).message);
     } finally {
       setImporting(false);
     }
   };
 
   const handleAdapt = async () => {
-    if (!workspace || !projectPath || !card) return;
+    if (!workspace || !projectPath || !card) { setError('缺少工作区或目标作品'); return; }
     setAdapting(true);
+    setError('');
     try {
       const results = await bridge.fanlibAdapt(workspace.path, card.id, projectPath) as any[];
+      if (!results || results.length === 0) {
+        setError('AI 未返回改编建议，请重试');
+        return;
+      }
       setAdaptations(results);
       const attrs: Record<string, string> = {};
       for (const r of results) {
@@ -94,7 +101,7 @@ export const ImportDialog: React.FC = () => {
       }
       setAdaptedAttrs(attrs);
     } catch (e) {
-      console.error('Adaptation failed:', e);
+      setError('AI 改编失败: ' + (e as Error).message);
     } finally {
       setAdapting(false);
     }
@@ -111,7 +118,12 @@ export const ImportDialog: React.FC = () => {
           {projectPath ? ` → 目标作品：${activeProject}` : ''}
         </div>
 
-        {!projectPath && (
+        {error && (
+          <div style={{ ...loadingBar, backgroundColor: '#5a1d1d', color: '#f44747' }}>
+            ✗ {error}
+          </div>
+        )}
+        {!projectPath && !error && (
           <div style={{ ...loadingBar, backgroundColor: '#5a1d1d' }}>
             请先在左侧 Explorer 中选择一个作品
           </div>

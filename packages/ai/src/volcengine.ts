@@ -10,7 +10,6 @@ export interface ImageGenerateOptions {
   height?: number;
   seed?: number;
   referenceImage?: string;
-  style?: string;
 }
 
 export interface VideoGenerateOptions {
@@ -25,90 +24,100 @@ const DEFAULT_BASE_URL = 'https://ark.cn-beijing.volces.com/api/v3';
 export function createVolcEngineClient(config: VolcEngineConfig) {
   const baseUrl = config.baseUrl ?? DEFAULT_BASE_URL;
 
-  async function request(endpoint: string, body: Record<string, unknown>): Promise<unknown> {
-    const response = await fetch(`${baseUrl}${endpoint}`, {
-      method: 'POST',
+  async function request(method: string, path: string, body?: Record<string, unknown>): Promise<unknown> {
+    const response = await fetch(`${baseUrl}${path}`, {
+      method,
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${config.apiKey}`,
       },
-      body: JSON.stringify(body),
+      body: body ? JSON.stringify(body) : undefined,
     });
 
     if (!response.ok) {
       const errText = await response.text().catch(() => '');
-      throw new Error(`火山方舟 API 错误 (${response.status}): ${errText}`);
+      throw new Error(`火山方舟 API 错误 (${response.status}): ${errText.slice(0, 200)}`);
     }
 
     return response.json();
   }
 
   return {
-    async generateImage(options: ImageGenerateOptions): Promise<string[]> {
-      const body: Record<string, unknown> = {
-        model: 'doubao-seedream-1-0',
-        prompt: options.prompt,
-        size: `${options.width ?? 1024}x${options.height ?? 1024}`,
-        n: 1,
-      };
-
-      if (options.seed && options.seed > 0) {
-        body.seed = options.seed;
-      }
-
+    /** 连通性测试：列出可用模型 */
+    async ping(): Promise<boolean> {
       try {
-        const data = await request('/images/generations', body) as {
-          data?: { url?: string }[];
-        };
-        return (data.data ?? []).map((img) => img.url ?? '');
+        await request('GET', '/models');
+        return true;
       } catch {
-        // Fallback: try chat completions with a vision-capable model
-        const chatBody = {
-          model: 'doubao-vision-pro-32k',
-          messages: [
-            {
-              role: 'user',
-              content: `请根据以下描述生成一张图片：${options.prompt}。${options.negativePrompt ? `避免：${options.negativePrompt}` : ''}`,
-            },
-          ],
-        };
-        const chatData = await request('/chat/completions', chatBody) as {
-          choices?: { message?: { content?: string } }[];
-        };
-        return [chatData.choices?.[0]?.message?.content ?? ''];
+        return false;
       }
     },
 
-    async generateVideo(options: VideoGenerateOptions): Promise<string> {
+    /** 通过接入点 ID 生成图像 */
+    async generateImage(endpointId: string, options: ImageGenerateOptions): Promise<string[]> {
       const body = {
-        model: 'doubao-video-pro',
-        prompt: options.prompt,
-        duration: options.duration ?? 5,
-        fps: options.fps ?? 24,
-      };
-
-      const data = await request('/videos/generations', body) as {
-        id?: string;
-      };
-      return data.id ?? '';
-    },
-
-    async imageToImage(sourceImage: string, options: ImageGenerateOptions): Promise<string[]> {
-      const body: Record<string, unknown> = {
-        model: 'doubao-seedream-1-0',
-        prompt: options.prompt,
-        image: sourceImage,
+        model: endpointId,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: `生成一张图片：${options.prompt}${options.negativePrompt ? `。避免：${options.negativePrompt}` : ''}`,
+              },
+            ],
+          },
+        ],
         size: `${options.width ?? 1024}x${options.height ?? 1024}`,
       };
 
-      if (options.seed && options.seed > 0) {
-        body.seed = options.seed;
-      }
-
-      const data = await request('/images/generations', body) as {
-        data?: { url?: string }[];
+      const data = await request('POST', '/chat/completions', body) as {
+        choices?: { message?: { content?: { image_url?: { url?: string } }[] | string } }[];
       };
-      return (data.data ?? []).map((img) => img.url ?? '');
+      const content = data.choices?.[0]?.message?.content;
+      if (Array.isArray(content)) {
+        return content.map((c) => c.image_url?.url ?? '').filter(Boolean);
+      }
+      return [typeof content === 'string' ? content : ''];
+    },
+
+    /** 图生图：基于参考图生成变体 */
+    async imageToImage(endpointId: string, sourceImage: string, options: ImageGenerateOptions): Promise<string[]> {
+      const body = {
+        model: endpointId,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image_url',
+                image_url: { url: sourceImage },
+              },
+              {
+                type: 'text',
+                text: `基于此参考图，${options.prompt}`,
+              },
+            ],
+          },
+        ],
+      };
+
+      const data = await request('POST', '/chat/completions', body) as {
+        choices?: { message?: { content?: { image_url?: { url?: string } }[] | string } }[];
+      };
+      const content = data.choices?.[0]?.message?.content;
+      if (Array.isArray(content)) {
+        return content.map((c) => c.image_url?.url ?? '').filter(Boolean);
+      }
+      return [];
+    },
+
+    /** 通用的聊天补全（用于 AI 辅助图像 prompt 优化等） */
+    async chat(messages: { role: string; content: string }[]): Promise<string> {
+      const data = await request('POST', '/chat/completions', { messages }) as {
+        choices?: { message?: { content?: string } }[];
+      };
+      return data.choices?.[0]?.message?.content ?? '';
     },
   };
 }

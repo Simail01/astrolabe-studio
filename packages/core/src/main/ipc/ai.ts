@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron';
 import { createDeepSeekClient, createVolcEngineClient } from '@astrolabe/ai';
-import type { StreamCallback, ImageGenerateOptions, VideoGenerateOptions } from '@astrolabe/ai';
+import type { StreamCallback } from '@astrolabe/ai';
 import { aiKeyStore } from '../services/keystore.service';
 
 function getDeepSeekClient() {
@@ -44,21 +44,21 @@ export function registerAIHandlers(): void {
     }
   });
 
-  ipcMain.handle('ai:image:generate', async (_event, options: ImageGenerateOptions) => {
+  ipcMain.handle('ai:image:generate', async (_event, endpointId: string, options: { prompt: string; width?: number; height?: number; seed?: number; referenceImage?: string }) => {
     try {
       const client = getVolcEngineClient();
-      return await client.generateImage(options);
+      return await client.generateImage(endpointId, options);
     } catch (err) {
       throw new Error(`图像生成失败: ${(err as Error).message}`);
     }
   });
 
-  ipcMain.handle('ai:video:generate', async (_event, options: VideoGenerateOptions) => {
+  ipcMain.handle('ai:volc:ping', async () => {
     try {
       const client = getVolcEngineClient();
-      return await client.generateVideo(options);
+      return await client.ping();
     } catch (err) {
-      throw new Error(`视频生成失败: ${(err as Error).message}`);
+      return false;
     }
   });
 

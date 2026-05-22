@@ -137,9 +137,14 @@ export const AISettings: React.FC<Props> = ({ onSaved }) => {
     if (!volcKey) return;
     setVolcStatus('testing');
     try {
-      await bridge.generateImage({ prompt: '连通性测试图片', width: 64, height: 64 });
-      setVolcStatus('ok');
-      setVolcStatusMsg('连接成功');
+      const ok = await bridge.pingVolcEngine();
+      if (ok) {
+        setVolcStatus('ok');
+        setVolcStatusMsg('连接成功');
+      } else {
+        setVolcStatus('fail');
+        setVolcStatusMsg('连接失败，请检查 API Key');
+      }
     } catch (e) {
       setVolcStatus('fail');
       setVolcStatusMsg((e as Error).message || '连接失败');

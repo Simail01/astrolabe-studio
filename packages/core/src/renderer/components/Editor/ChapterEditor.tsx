@@ -30,7 +30,7 @@ interface Props {
 }
 
 export const ChapterEditor: React.FC<Props> = () => {
-  const { currentChapter, content, wordCount, isDirty, setContent, markClean } = useChapterStore();
+  const { currentChapter, content, wordCount, isDirty, setContent } = useChapterStore();
   const selectedNodeId = useOutlineStore((s) => s.selectedNodeId);
   const outline = useOutlineStore((s) => s.outline);
   const getProjectPath = useWorkspaceStore((s) => s.getProjectPath);
@@ -52,7 +52,6 @@ export const ChapterEditor: React.FC<Props> = () => {
       if (data) {
         useChapterStore.getState().setChapter(data as Chapter);
       } else {
-        // No saved chapter yet, start fresh with node title
         useChapterStore.getState().setChapter({
           id: selectedNodeId,
           title: selectedNode?.title || '未命名',
@@ -68,47 +67,42 @@ export const ChapterEditor: React.FC<Props> = () => {
     });
   }, [selectedNodeId]);
 
-  // Auto-save: 2 seconds after user stops typing
+  // Save function — reads all state from store at call time, not closure
   const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const doSave = useCallback(async () => {
     const projectPath = getProjectPath();
-    if (!projectPath || !isDirty || !selectedNodeId) return;
+    const store = useChapterStore.getState();
+    const nodeId = useOutlineStore.getState().selectedNodeId;
+    const node = findNode(useOutlineStore.getState().outline?.nodes || [], nodeId);
+    if (!projectPath || !nodeId || !store.isDirty) return;
     setSaveStatus('saving');
     try {
       const ch: Chapter = {
-        id: selectedNodeId,
-        title: selectedNode?.title || '未命名',
-        content: useChapterStore.getState().content,
-        wordCount: useChapterStore.getState().wordCount,
+        id: nodeId,
+        title: node?.title || '未命名',
+        content: store.content,
+        wordCount: store.wordCount,
         order: 0,
-        createdAt: currentChapter?.createdAt || new Date().toISOString(),
+        createdAt: store.currentChapter?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
       await bridge.pipelineSaveChapter(projectPath, ch);
       useChapterStore.getState().markClean();
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
-    } catch {
+    } catch (e) {
+      console.error('Save failed:', e);
       setSaveStatus('idle');
     }
-  }, [getProjectPath, currentChapter, selectedNode]);
+  }, [getProjectPath]);
 
-  // Watch content changes and debounce save
-  const prevContent = useRef(content);
+  // Auto-save: debounce 2s after content change
   useEffect(() => {
-    if (content !== prevContent.current && isDirty) {
-      prevContent.current = content;
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-      saveTimerRef.current = setTimeout(doSave, 2000);
-    }
+    if (!isDirty) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(doSave, 2000);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [content, isDirty, doSave]);
-
-  // Save on blur (when user clicks away)
-  const handleBlur = useCallback(() => {
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    doSave();
-  }, [doSave]);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setContent(e.target.value);

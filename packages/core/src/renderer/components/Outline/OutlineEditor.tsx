@@ -106,28 +106,71 @@ interface Props {
 }
 
 export const OutlineEditor: React.FC<Props> = ({ projectPath }) => {
-  const { outline, setOutline } = useOutlineStore();
+  const outline = useOutlineStore((s) => s.outline);
+  const setOutline = useOutlineStore((s) => s.setOutline);
   const [aiPrompt, setAiPrompt] = useState('');
+  const [showPromptInput, setShowPromptInput] = useState(false);
   const [generating, setGenerating] = useState(false);
 
-  const handleAddRoot = () => {
-    if (!outline) {
-      setOutline({
-        id: 'outline-1',
-        title: '',
-        premise: '',
-        genre: [],
-        nodes: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+  const ensureOutline = () => {
+    const current = useOutlineStore.getState().outline;
+    if (!current) {
+      useOutlineStore.getState().setOutline({
+        id: 'outline-1', title: '', premise: '', genre: [],
+        nodes: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
         history: [],
       } as any);
     }
-    const { addChildNode } = useOutlineStore.getState();
-    // Create a root-level node
-    if (outline && outline.nodes.length === 0) {
-      const newOutline = { ...outline };
-      // Add to nodes directly
+  };
+
+  const handleAddRoot = () => {
+    ensureOutline();
+    const nodeId = `node-${Date.now()}`;
+    const current = useOutlineStore.getState().outline;
+    if (current) {
+      const nodes = [...current.nodes, {
+        id: nodeId,
+        title: '新卷',
+        summary: '',
+        children: [],
+      }];
+      useOutlineStore.getState().setOutline({ ...current, nodes, updatedAt: new Date().toISOString() } as any);
+    }
+  };
+
+  const handleAIGenerate = async () => {
+    const promptText = aiPrompt.trim();
+    if (!promptText) return;
+    setGenerating(true);
+    try {
+      const systemPrompt = '你是一位经验丰富的小说架构师。根据创作意图生成结构化大纲。输出格式：每行一个节点，用缩进表示层级。例如：\n第一卷：标题\n  第1章：标题 — 概要\n  第2章：标题 — 概要';
+      const result = await bridge.generateText(promptText, systemPrompt) as string;
+      const lines = result.split('\n').filter(l => l.trim());
+      const nodes: OutlineNode[] = [];
+      const stack: { node: OutlineNode; depth: number }[] = [];
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const indent = line.search(/\S/);
+        const depth = indent < 0 ? 0 : Math.floor(indent / 2);
+        const text = line.trim();
+        const newNode: OutlineNode = { id: `node-${Date.now()}-${i}`, title: text, summary: '', children: [] };
+        while (stack.length > 0 && stack[stack.length - 1].depth >= depth) stack.pop();
+        if (stack.length === 0) {
+          nodes.push(newNode);
+        } else {
+          stack[stack.length - 1].node.children.push(newNode);
+        }
+        stack.push({ node: newNode, depth });
+      }
+      setOutline({
+        id: 'outline-1', title: '', premise: promptText, genre: [], nodes,
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), history: [],
+      } as any);
+      setShowPromptInput(false);
+    } catch (err) {
+      console.error('AI generation failed:', err);
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -135,63 +178,37 @@ export const OutlineEditor: React.FC<Props> = ({ projectPath }) => {
     <div style={container}>
       <div style={header}>
         <span style={{ fontWeight: 600, fontSize: 12 }}>大纲</span>
-        <button style={headerBtn} onClick={() => {
-          // Create new outline if none exists
-          if (!outline?.nodes.length) {
-            const { setOutline, addChildNode } = useOutlineStore.getState();
-            if (!outline) {
-              setOutline({
-                id: 'outline-1', title: '', premise: '', genre: [], nodes: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), history: [],
-              } as any);
-            }
-          }
-        }}>+ 根节点</button>
-        <button style={{ ...headerBtn, backgroundColor: '#007acc' }} onClick={async () => {
-          if (!aiPrompt) {
-            const p = prompt('请输入故事梗概或创作意图：');
-            if (!p) return;
-            setAiPrompt(p);
-          }
-          setGenerating(true);
-          try {
-            const systemPrompt = '你是一位经验丰富的小说架构师。根据创作意图生成结构化大纲。输出格式：每行一个节点，用缩进表示层级。例：\n第一卷：标题\n  第1章：标题 — 概要\n  第2章：标题 — 概要';
-            const result = await bridge.generateText(aiPrompt || '生成一个故事大纲', systemPrompt) as string;
-            // Parse AI output into nodes
-            const lines = result.split('\n').filter(l => l.trim());
-            const nodes: OutlineNode[] = [];
-            const stack: { node: OutlineNode; depth: number }[] = [];
-            for (const line of lines) {
-              const indent = line.search(/\S/);
-              const depth = indent < 0 ? 0 : Math.floor(indent / 2);
-              const text = line.trim();
-              const newNode: OutlineNode = { id: `node-${Date.now()}-${nodes.length}`, title: text, summary: '', children: [] };
-              while (stack.length > 0 && stack[stack.length - 1].depth >= depth) stack.pop();
-              if (stack.length === 0) {
-                nodes.push(newNode);
-              } else {
-                stack[stack.length - 1].node.children.push(newNode);
-              }
-              stack.push({ node: newNode, depth });
-            }
-            const { setOutline } = useOutlineStore.getState();
-            setOutline({
-              id: 'outline-1', title: '', premise: aiPrompt, genre: [], nodes, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), history: [],
-            } as any);
-          } catch (err) {
-            console.error('AI generation failed:', err);
-          } finally {
-            setGenerating(false);
-          }
-        }} disabled={generating}>
-          {generating ? '生成中...' : 'AI 生成'}
-        </button>
+        <button style={headerBtn} onClick={handleAddRoot}>+ 根节点</button>
+        {!showPromptInput ? (
+          <button style={{ ...headerBtn, backgroundColor: '#007acc' }} onClick={() => setShowPromptInput(true)}>
+            AI 生成
+          </button>
+        ) : (
+          <div style={{ display: 'flex', gap: 4, flex: 1 }}>
+            <input
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+              placeholder="输入故事梗概…"
+              style={{
+                flex: 1, fontSize: 12, padding: '2px 6px', backgroundColor: '#3c3c3c',
+                border: '1px solid #007acc', color: '#fff', borderRadius: 3, outline: 'none',
+              }}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleAIGenerate(); if (e.key === 'Escape') setShowPromptInput(false); }}
+              autoFocus
+            />
+            <button style={{ ...headerBtn, backgroundColor: '#007acc' }} onClick={handleAIGenerate} disabled={generating || !aiPrompt.trim()}>
+              {generating ? '…' : '生成'}
+            </button>
+            <button style={headerBtn} onClick={() => setShowPromptInput(false)}>取消</button>
+          </div>
+        )}
       </div>
       {outline?.nodes?.map((node) => (
         <TreeNode key={node.id} node={node} depth={0} />
       ))}
       {(!outline || outline.nodes.length === 0) && (
         <div style={{ padding: 20, color: '#666', textAlign: 'center', fontSize: 13 }}>
-          暂无大纲节点，点击"AI 生成"或"+ 根节点"开始
+          点击"+ 根节点"手动创建，或"AI 生成"自动生成大纲
         </div>
       )}
     </div>

@@ -35,8 +35,8 @@ export const bridge = {
   // AI
   generateText: (prompt: string, systemPrompt?: string) => api.invoke('ai:text:generate', prompt, systemPrompt) as Promise<string>,
   generateTextStream: (prompt: string, systemPrompt?: string) => api.invoke('ai:text:stream', prompt, systemPrompt) as Promise<{ started: boolean }>,
-  generateImage: (prompt: string) => api.invoke('ai:image:generate', prompt) as Promise<string[]>,
-  generateVideo: (prompt: string) => api.invoke('ai:video:generate', prompt) as Promise<string>,
+  generateImage: (options: { prompt: string; width?: number; height?: number; seed?: number; referenceImage?: string }) => api.invoke('ai:image:generate', options) as Promise<string[]>,
+  generateVideo: (options: { prompt: string; duration?: number; fps?: number }) => api.invoke('ai:video:generate', options) as Promise<string>,
   onAIChunk: (callback: (text: string) => void) => api.on('ai:text:chunk', callback as (...args: unknown[]) => void),
   onAIDone: (callback: (fullText: string) => void) => api.on('ai:text:done', callback as (...args: unknown[]) => void),
   onAIError: (callback: (error: string) => void) => api.on('ai:text:error', callback as (...args: unknown[]) => void),

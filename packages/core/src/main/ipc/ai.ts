@@ -1,12 +1,18 @@
 import { ipcMain } from 'electron';
-import { createDeepSeekClient } from '@astrolabe/ai';
-import type { StreamCallback } from '@astrolabe/ai';
+import { createDeepSeekClient, createVolcEngineClient } from '@astrolabe/ai';
+import type { StreamCallback, ImageGenerateOptions, VideoGenerateOptions } from '@astrolabe/ai';
 import { aiKeyStore } from '../services/keystore.service';
 
 function getDeepSeekClient() {
   const apiKey = aiKeyStore.getKey('deepseek');
   if (!apiKey) throw new Error('DeepSeek API Key 未配置');
   return createDeepSeekClient({ apiKey });
+}
+
+function getVolcEngineClient() {
+  const apiKey = aiKeyStore.getKey('volcengine');
+  if (!apiKey) throw new Error('火山方舟 API Key 未配置');
+  return createVolcEngineClient({ apiKey });
 }
 
 export function registerAIHandlers(): void {
@@ -38,12 +44,22 @@ export function registerAIHandlers(): void {
     }
   });
 
-  ipcMain.handle('ai:image:generate', async (_event, prompt: string) => {
-    return [`[image] ${prompt.slice(0, 50)}...`];
+  ipcMain.handle('ai:image:generate', async (_event, options: ImageGenerateOptions) => {
+    try {
+      const client = getVolcEngineClient();
+      return await client.generateImage(options);
+    } catch (err) {
+      throw new Error(`图像生成失败: ${(err as Error).message}`);
+    }
   });
 
-  ipcMain.handle('ai:video:generate', async (_event, prompt: string) => {
-    return `[video] ${prompt.slice(0, 50)}...`;
+  ipcMain.handle('ai:video:generate', async (_event, options: VideoGenerateOptions) => {
+    try {
+      const client = getVolcEngineClient();
+      return await client.generateVideo(options);
+    } catch (err) {
+      throw new Error(`视频生成失败: ${(err as Error).message}`);
+    }
   });
 
   ipcMain.handle('ai:keys:set', (_event, provider: string, key: string) => {

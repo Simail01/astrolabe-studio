@@ -90,8 +90,9 @@ interface Props {
 export const AISettings: React.FC<Props> = ({ onSaved }) => {
   const [deepseekKey, setDeepseekKey] = useState('');
   const [deepseekBaseUrl, setDeepseekBaseUrl] = useState('');
-  const [volcAk, setVolcAk] = useState('');
-  const [volcSk, setVolcSk] = useState('');
+  const [volcKey, setVolcKey] = useState('');
+  const [volcStatus, setVolcStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
+  const [volcStatusMsg, setVolcStatusMsg] = useState('');
   const [showSaved, setShowSaved] = useState(false);
   const [dsStatus, setDsStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
   const [dsStatusMsg, setDsStatusMsg] = useState('');
@@ -99,8 +100,7 @@ export const AISettings: React.FC<Props> = ({ onSaved }) => {
   useEffect(() => {
     bridge.getAIKey('deepseek').then((k) => { if (k) setDeepseekKey(k); }).catch(() => {});
     bridge.getAIKey('deepseek-baseurl').then((k) => { if (k) setDeepseekBaseUrl(k); }).catch(() => {});
-    bridge.getAIKey('volcengine-ak').then((k) => { if (k) setVolcAk(k); }).catch(() => {});
-    bridge.getAIKey('volcengine-sk').then((k) => { if (k) setVolcSk(k); }).catch(() => {});
+    bridge.getAIKey('volcengine').then((k) => { if (k) setVolcKey(k); }).catch(() => {});
   }, []);
 
   const [saveError, setSaveError] = useState('');
@@ -110,8 +110,7 @@ export const AISettings: React.FC<Props> = ({ onSaved }) => {
     Promise.all([
       bridge.setAIKey('deepseek', deepseekKey),
       deepseekBaseUrl ? bridge.setAIKey('deepseek-baseurl', deepseekBaseUrl) : Promise.resolve(),
-      bridge.setAIKey('volcengine-ak', volcAk),
-      bridge.setAIKey('volcengine-sk', volcSk),
+      bridge.setAIKey('volcengine', volcKey),
     ]).then(() => {
       setShowSaved(true);
       onSaved?.();
@@ -131,6 +130,19 @@ export const AISettings: React.FC<Props> = ({ onSaved }) => {
     } catch (e) {
       setDsStatus('fail');
       setDsStatusMsg((e as Error).message || '连接失败');
+    }
+  };
+
+  const testVolcEngine = async () => {
+    if (!volcKey) return;
+    setVolcStatus('testing');
+    try {
+      await bridge.generateImage({ prompt: '连通性测试图片', width: 64, height: 64 });
+      setVolcStatus('ok');
+      setVolcStatusMsg('连接成功');
+    } catch (e) {
+      setVolcStatus('fail');
+      setVolcStatusMsg((e as Error).message || '连接失败');
     }
   };
 
@@ -170,29 +182,26 @@ export const AISettings: React.FC<Props> = ({ onSaved }) => {
         </div>
       </div>
 
-      {/* VolcEngine */}
+      {/* VolcEngine Ark */}
       <div style={section}>
-        <div style={sectionTitle}>火山引擎（图像/视频生成）</div>
+        <div style={sectionTitle}>火山方舟（图像/视频生成）</div>
         <div style={field}>
-          <label style={label}>Access Key</label>
+          <label style={label}>API Key *</label>
           <input
             style={input}
             type="password"
-            value={volcAk}
-            onChange={(e) => setVolcAk(e.target.value)}
-            placeholder="AK..."
+            value={volcKey}
+            onChange={(e) => { setVolcKey(e.target.value); setVolcStatus('idle'); }}
+            placeholder="火山方舟 API Key..."
           />
+          <div style={hint}>在火山方舟控制台 (ark.volcengine.com) 获取 API Key</div>
         </div>
-        <div style={field}>
-          <label style={label}>Secret Key</label>
-          <input
-            style={input}
-            type="password"
-            value={volcSk}
-            onChange={(e) => setVolcSk(e.target.value)}
-            placeholder="SK..."
-          />
-          <div style={hint}>在火山引擎控制台获取 Access Key 和 Secret Key</div>
+        <div style={btnRow}>
+          <button style={btnSecondary} onClick={testVolcEngine} disabled={volcStatus === 'testing' || !volcKey}>
+            {volcStatus === 'testing' ? '测试中...' : '连通性测试'}
+          </button>
+          {volcStatus === 'ok' && <span style={statusOk}>✓ {volcStatusMsg}</span>}
+          {volcStatus === 'fail' && <span style={statusFail}>✗ {volcStatusMsg}</span>}
         </div>
       </div>
 

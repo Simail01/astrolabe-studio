@@ -97,20 +97,28 @@ export const AISettings: React.FC<Props> = ({ onSaved }) => {
   const [dsStatusMsg, setDsStatusMsg] = useState('');
 
   useEffect(() => {
-    bridge.getAIKey('deepseek').then((k) => { if (k) setDeepseekKey(k); });
-    bridge.getAIKey('deepseek-baseurl').then((k) => { if (k) setDeepseekBaseUrl(k); });
-    bridge.getAIKey('volcengine-ak').then((k) => { if (k) setVolcAk(k); });
-    bridge.getAIKey('volcengine-sk').then((k) => { if (k) setVolcSk(k); });
+    bridge.getAIKey('deepseek').then((k) => { if (k) setDeepseekKey(k); }).catch(() => {});
+    bridge.getAIKey('deepseek-baseurl').then((k) => { if (k) setDeepseekBaseUrl(k); }).catch(() => {});
+    bridge.getAIKey('volcengine-ak').then((k) => { if (k) setVolcAk(k); }).catch(() => {});
+    bridge.getAIKey('volcengine-sk').then((k) => { if (k) setVolcSk(k); }).catch(() => {});
   }, []);
 
-  const handleSave = async () => {
-    await bridge.setAIKey('deepseek', deepseekKey);
-    if (deepseekBaseUrl) await bridge.setAIKey('deepseek-baseurl', deepseekBaseUrl);
-    await bridge.setAIKey('volcengine-ak', volcAk);
-    await bridge.setAIKey('volcengine-sk', volcSk);
-    setShowSaved(true);
-    onSaved?.();
-    setTimeout(() => setShowSaved(false), 2000);
+  const [saveError, setSaveError] = useState('');
+
+  const handleSave = () => {
+    setSaveError('');
+    Promise.all([
+      bridge.setAIKey('deepseek', deepseekKey),
+      deepseekBaseUrl ? bridge.setAIKey('deepseek-baseurl', deepseekBaseUrl) : Promise.resolve(),
+      bridge.setAIKey('volcengine-ak', volcAk),
+      bridge.setAIKey('volcengine-sk', volcSk),
+    ]).then(() => {
+      setShowSaved(true);
+      onSaved?.();
+      setTimeout(() => setShowSaved(false), 2000);
+    }).catch((e) => {
+      setSaveError('保存失败: ' + (e as Error).message);
+    });
   };
 
   const testDeepSeek = async () => {
@@ -191,6 +199,7 @@ export const AISettings: React.FC<Props> = ({ onSaved }) => {
       <div>
         <button style={btn} onClick={handleSave}>保存配置</button>
         {showSaved && <span style={statusOk}>已保存</span>}
+        {saveError && <span style={statusFail}>{saveError}</span>}
       </div>
     </div>
   );

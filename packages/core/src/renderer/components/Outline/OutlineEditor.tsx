@@ -111,6 +111,8 @@ export const OutlineEditor: React.FC<Props> = ({ projectPath }) => {
   const [aiPrompt, setAiPrompt] = useState('');
   const [showPromptInput, setShowPromptInput] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [genError, setGenError] = useState('');
+  const [genSuccess, setGenSuccess] = useState(false);
 
   const ensureOutline = () => {
     const current = useOutlineStore.getState().outline;
@@ -142,9 +144,14 @@ export const OutlineEditor: React.FC<Props> = ({ projectPath }) => {
     const promptText = aiPrompt.trim();
     if (!promptText) return;
     setGenerating(true);
+    setGenError('');
+    setGenSuccess(false);
     try {
       const systemPrompt = '你是一位经验丰富的小说架构师。根据创作意图生成结构化大纲。输出格式：每行一个节点，用缩进表示层级。例如：\n第一卷：标题\n  第1章：标题 — 概要\n  第2章：标题 — 概要';
       const result = await bridge.generateText(promptText, systemPrompt) as string;
+      if (!result || result.trim().length === 0) {
+        throw new Error('AI 返回了空内容，请重试');
+      }
       const lines = result.split('\n').filter(l => l.trim());
       const nodes: OutlineNode[] = [];
       const stack: { node: OutlineNode; depth: number }[] = [];
@@ -167,8 +174,11 @@ export const OutlineEditor: React.FC<Props> = ({ projectPath }) => {
         createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), history: [],
       } as any);
       setShowPromptInput(false);
+      setAiPrompt('');
+      setGenSuccess(true);
+      setTimeout(() => setGenSuccess(false), 3000);
     } catch (err) {
-      console.error('AI generation failed:', err);
+      setGenError((err as Error).message || '生成失败，请检查 API Key 和网络连接');
     } finally {
       setGenerating(false);
     }
@@ -203,10 +213,30 @@ export const OutlineEditor: React.FC<Props> = ({ projectPath }) => {
           </div>
         )}
       </div>
+
+      {/* 状态提示 */}
+      {generating && (
+        <div style={{ padding: '12px 16px', backgroundColor: '#094771', color: '#fff', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ display: 'inline-block', width: 12, height: 12, border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          AI 正在生成大纲，请稍候…
+        </div>
+      )}
+      {genError && (
+        <div style={{ padding: '10px 16px', backgroundColor: '#5a1d1d', color: '#f44747', fontSize: 13, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>✗ {genError}</span>
+          <button onClick={() => setGenError('')} style={{ background: 'none', border: 'none', color: '#f44747', cursor: 'pointer', fontSize: 16 }}>✕</button>
+        </div>
+      )}
+      {genSuccess && (
+        <div style={{ padding: '8px 16px', backgroundColor: '#1d5a1d', color: '#4ec9b0', fontSize: 13 }}>
+          ✓ 大纲生成成功！共 {outline?.nodes?.length ?? 0} 个根节点
+        </div>
+      )}
+
       {outline?.nodes?.map((node) => (
         <TreeNode key={node.id} node={node} depth={0} />
       ))}
-      {(!outline || outline.nodes.length === 0) && (
+      {(!outline || outline.nodes.length === 0) && !generating && (
         <div style={{ padding: 20, color: '#666', textAlign: 'center', fontSize: 13 }}>
           点击"+ 根节点"手动创建，或"AI 生成"自动生成大纲
         </div>

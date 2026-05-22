@@ -29,7 +29,9 @@ export const FanlibCardEditor: React.FC = () => {
   if (!card) return <div style={placeholder}>选择一张卡片查看详情</div>;
 
   const handleGenerateImage = async () => {
-    if (!workspace) return;
+    if (!workspace) { setGenError('未打开工作区'); return; }
+    const volcKey = await bridge.getAIKey('volcengine').catch(() => null);
+    if (!volcKey) { setGenError('请先在设置中配置火山方舟 API Key'); return; }
     setGenerating(true);
     setGenError('');
     try {
@@ -39,12 +41,15 @@ export const FanlibCardEditor: React.FC = () => {
         : `设定图，${card.name}`;
       const prompt = genPrompt || basePrompt;
       const urls = await bridge.generateImage({ model, prompt, size: '2K' }) as string[];
-      if (urls.length > 0) {
-        const updated = { ...card, designImages: [...((card as any).designImages || []), ...urls], updatedAt: new Date().toISOString() };
-        await bridge.fanlibSave(workspace.path, updated as any);
-        useFanlibStore.getState().addOrUpdateCard(updated as any);
-        setGenPrompt('');
+      if (!urls || urls.length === 0) {
+        setGenError('生成失败：AI 未返回图片');
+        return;
       }
+      const designImages = [...((card as any).designImages || []), ...urls];
+      const updated = { ...card, designImages, updatedAt: new Date().toISOString() };
+      await bridge.fanlibSave(workspace.path, updated as any);
+      useFanlibStore.getState().addOrUpdateCard(updated as any);
+      setGenPrompt('');
     } catch (e) {
       setGenError((e as Error).message || '生成失败');
     } finally {

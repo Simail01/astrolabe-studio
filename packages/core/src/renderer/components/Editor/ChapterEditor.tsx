@@ -114,8 +114,14 @@ export const ChapterEditor: React.FC<Props> = () => {
     setContent(e.target.value);
   }, [setContent]);
 
-  // Keyboard shortcut: Tab for indent
+  // Keyboard shortcut: Ctrl+S save, Tab indent
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      doSave();
+      return;
+    }
     if (e.key === 'Tab') {
       e.preventDefault();
       const ta = textareaRef.current;
@@ -126,7 +132,7 @@ export const ChapterEditor: React.FC<Props> = () => {
       setContent(newContent);
       setTimeout(() => { ta.selectionStart = ta.selectionEnd = start + 2; }, 0);
     }
-  }, [content, setContent]);
+  }, [content, setContent, doSave]);
 
   if (!currentChapter && !selectedNode) {
     return (
@@ -149,6 +155,13 @@ export const ChapterEditor: React.FC<Props> = () => {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={info}>{wordCount} 字</span>
+          <button
+            style={{ ...btn, backgroundColor: isDirty ? '#d4a72c' : '#3c3c3c' }}
+            onClick={() => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); doSave(); }}
+            title="保存 (Ctrl+S)"
+          >
+            保存
+          </button>
           <button
             style={aiGenerating ? btnDisabled : btn}
             disabled={aiGenerating}

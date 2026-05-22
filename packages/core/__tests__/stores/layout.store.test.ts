@@ -6,7 +6,7 @@ describe('useLayoutStore', () => {
     useLayoutStore.setState({
       tabs: [],
       activeTab: null,
-      panelLayout: { grid: '1x1', sizes: [1] },
+      panelLayout: { grid: '1x2', sizes: [0.3, 0.7] },
       sidebarVisible: true,
       rightPanelVisible: false,
       bottomPanelVisible: false,

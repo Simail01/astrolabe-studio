@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron';
 import { fileService } from '../services/file.service';
+import { sessionService } from '../services/session.service';
 import path from 'path';
 import type { Workspace } from '@astrolabe/shared';
 import { randomUUID } from 'crypto';
@@ -38,6 +39,21 @@ export function registerWorkspaceHandlers(): void {
     }
     workspace.projects = projects;
 
+    // Save the last workspace path for session restore
+    sessionService.saveSession({
+      openedProjects: projects,
+      activeProject: folderPath,
+      tabs: [],
+      panelLayout: { grid: '1x1', sizes: [1] },
+      scrollPositions: {},
+    });
+
     return workspace;
+  });
+
+  ipcMain.handle('workspace:getLast', async () => {
+    const session = sessionService.loadSession();
+    if (!session || !session.activeProject) return null;
+    return session.activeProject;
   });
 }

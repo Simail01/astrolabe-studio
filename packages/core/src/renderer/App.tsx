@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ActivityBar } from './components/ActivityBar/ActivityBar';
 import { TabBar } from './components/TabBar/TabBar';
 import { EditorArea } from './components/EditorArea/EditorArea';
@@ -9,7 +9,10 @@ import { CommandPalette } from './components/CommandPalette/CommandPalette';
 import { Explorer } from './components/Explorer/Explorer';
 import { WorkspaceDialog } from './components/Workspace/WorkspaceDialog';
 import { useLayoutStore } from './stores/layout.store';
+import { useWorkspaceStore } from './stores/workspace.store';
 import { useKeyboard } from './hooks/useKeyboard';
+import { bridge } from './services/bridge';
+import type { Workspace } from '@astrolabe/shared';
 
 const SHELL: React.CSSProperties = {
   display: 'flex',
@@ -45,6 +48,17 @@ const CENTER: React.CSSProperties = {
 export const App: React.FC = () => {
   useKeyboard();
   const bottomVisible = useLayoutStore((s) => s.bottomPanelVisible);
+
+  // Session restore: auto-load last workspace on startup
+  useEffect(() => {
+    bridge.getLastWorkspace().then((wsPath) => {
+      if (wsPath && typeof wsPath === 'string') {
+        bridge.openWorkspace(wsPath).then((ws) => {
+          useWorkspaceStore.getState().setWorkspace(ws as Workspace);
+        });
+      }
+    });
+  }, []);
 
   return (
     <div style={SHELL}>

@@ -27,6 +27,7 @@ export const bridge = {
   // Dialog & Workspace
   selectFolder: () => api.invoke('dialog:selectFolder') as Promise<string | null>,
   openWorkspace: (folderPath: string) => api.invoke('workspace:open', folderPath) as Promise<unknown>,
+  getLastWorkspace: () => api.invoke('workspace:getLast') as Promise<string | null>,
 
   // Event listeners
   onFileChanged: (callback: (path: string) => void) => api.on('fs:fileChanged', callback as (...args: unknown[]) => void),

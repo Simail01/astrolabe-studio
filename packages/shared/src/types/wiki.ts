@@ -26,3 +26,13 @@ export interface WikiIndex {
   entries: { id: string; type: WikiEntryType; title: string; aliases: string[] }[];
   updatedAt: string;
 }
+
+export interface WikiSuggestion {
+  type: WikiEntryType;
+  title: string;
+  summary: string;
+  content: string;
+  attributes: Record<string, string | string[]>;
+  confidence: number;
+  evidence: string;
+}

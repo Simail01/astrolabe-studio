@@ -3,6 +3,7 @@ import { GlobalNav, AppMode, CreateStage } from './components/Shell/GlobalNav';
 import { BottomBar } from './components/Shell/BottomBar';
 import { WritingPage } from './components/Pages/WritingPage';
 import { OutlinePage } from './components/Pages/OutlinePage';
+import { StoryboardViewer } from './components/Pipeline/StoryboardViewer';
 import { Explorer } from './components/Explorer/Explorer';
 import { WorkspaceDialog } from './components/Workspace/WorkspaceDialog';
 import { SettingsPanel } from './components/Settings/SettingsPanel';
@@ -44,11 +45,7 @@ export const App: React.FC = () => {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {mode === 'create' && stage === 'writing' && <WritingPage />}
           {mode === 'create' && stage === 'outline' && <OutlinePage />}
-          {mode === 'visualize' && (
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 16 }}>
-              视觉化模式 — 即将实现
-            </div>
-          )}
+          {mode === 'visualize' && <StoryboardViewer />}
           {mode === 'perform' && (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 16 }}>
               演出模式 — 即将实现

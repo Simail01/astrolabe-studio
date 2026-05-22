@@ -5,38 +5,38 @@ import { bridge } from '../../services/bridge';
 import type { Shot } from '@astrolabe/shared';
 
 const container: React.CSSProperties = {
-  display: 'flex', height: '100%', backgroundColor: '#1e1e1e', color: '#ccc',
+  display: 'flex', height: '100%', backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)',
 };
 const shotList: React.CSSProperties = {
-  width: 260, overflow: 'auto', borderRight: '1px solid #3c3c3c',
+  width: 260, overflow: 'auto', borderRight: '1px solid var(--border-subtle)',
 };
 const shotCard: React.CSSProperties = {
-  padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #2d2d2d', fontSize: 13,
+  padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid var(--border-subtle)', fontSize: 13,
 };
-const shotCardActive: React.CSSProperties = { ...shotCard, backgroundColor: '#094771' };
+const shotCardActive: React.CSSProperties = { ...shotCard, backgroundColor: 'var(--accent-dim)' };
 const shotDetail: React.CSSProperties = {
   flex: 1, padding: 16, overflow: 'auto',
 };
 const field: React.CSSProperties = { marginBottom: 14 };
-const fieldLabel: React.CSSProperties = { fontSize: 11, color: '#888', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1 };
-const fieldValue: React.CSSProperties = { fontSize: 13, color: '#ccc' };
+const fieldLabel: React.CSSProperties = { fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1 };
+const fieldValue: React.CSSProperties = { fontSize: 13, color: 'var(--text-primary)' };
 const framingTag: React.CSSProperties = {
-  display: 'inline-block', padding: '2px 6px', fontSize: 10, backgroundColor: '#0e639c', color: '#fff', borderRadius: 3, marginRight: 4,
+  display: 'inline-block', padding: '2px 6px', fontSize: 10, backgroundColor: 'var(--accent)', color: 'var(--text-inverse)', borderRadius: 3, marginRight: 4,
 };
 const angleTag: React.CSSProperties = {
-  display: 'inline-block', padding: '2px 6px', fontSize: 10, backgroundColor: '#5a3e00', color: '#dcdcaa', borderRadius: 3, marginRight: 4,
+  display: 'inline-block', padding: '2px 6px', fontSize: 10, backgroundColor: 'var(--accent-dim)', color: 'var(--accent)', borderRadius: 3, marginRight: 4,
 };
 const dialogLine: React.CSSProperties = {
-  padding: '4px 8px', marginBottom: 4, backgroundColor: '#2d2d2d', borderRadius: 3, fontSize: 12,
+  padding: '4px 8px', marginBottom: 4, backgroundColor: 'var(--bg-input)', borderRadius: 3, fontSize: 12,
 };
 const header: React.CSSProperties = {
-  padding: '8px 12px', fontSize: 12, fontWeight: 600, color: '#999', borderBottom: '1px solid #3c3c3c',
+  padding: '8px 12px', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-subtle)',
   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
 };
 const btn: React.CSSProperties = {
-  padding: '4px 12px', fontSize: 12, backgroundColor: '#007acc', color: '#fff', border: 'none', borderRadius: 3, cursor: 'pointer',
+  padding: '4px 12px', fontSize: 12, backgroundColor: 'var(--accent)', color: 'var(--text-inverse)', border: 'none', borderRadius: 3, cursor: 'pointer',
 };
-const btnAi: React.CSSProperties = { ...btn, backgroundColor: '#5a3e00', color: '#dcdcaa' };
+const btnAi: React.CSSProperties = { ...btn, backgroundColor: 'var(--accent-dim)', color: 'var(--accent)' };
 
 const framingLabels: Record<string, string> = {
   'extreme-long': '远景', 'long': '全景', 'medium': '中景', 'close-up': '特写', 'extreme-close-up': '大特写',

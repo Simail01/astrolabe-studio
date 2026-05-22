@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { GlobalNav, AppMode, CreateStage } from './components/Shell/GlobalNav';
 import { BottomBar } from './components/Shell/BottomBar';
 import { WritingPage } from './components/Pages/WritingPage';
+import { OutlinePage } from './components/Pages/OutlinePage';
 import { Explorer } from './components/Explorer/Explorer';
 import { WorkspaceDialog } from './components/Workspace/WorkspaceDialog';
 import { SettingsPanel } from './components/Settings/SettingsPanel';
@@ -42,11 +43,7 @@ export const App: React.FC = () => {
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {mode === 'create' && stage === 'writing' && <WritingPage />}
-          {mode === 'create' && stage === 'outline' && (
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 16 }}>
-              大纲画布 — 即将实现
-            </div>
-          )}
+          {mode === 'create' && stage === 'outline' && <OutlinePage />}
           {mode === 'visualize' && (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 16 }}>
               视觉化模式 — 即将实现

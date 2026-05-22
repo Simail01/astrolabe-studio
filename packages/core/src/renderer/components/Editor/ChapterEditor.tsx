@@ -40,19 +40,47 @@ export const ChapterEditor: React.FC<Props> = () => {
 
   const selectedNode = outline?.nodes ? findNode(outline.nodes, selectedNodeId) : null;
 
+  // Load chapter content when selected node changes
+  useEffect(() => {
+    if (!selectedNodeId) {
+      useChapterStore.getState().setChapter(null);
+      return;
+    }
+    const projectPath = getProjectPath();
+    if (!projectPath) return;
+    bridge.pipelineGetChapter(projectPath, selectedNodeId).then((data) => {
+      if (data) {
+        useChapterStore.getState().setChapter(data as Chapter);
+      } else {
+        // No saved chapter yet, start fresh with node title
+        useChapterStore.getState().setChapter({
+          id: selectedNodeId,
+          title: selectedNode?.title || '未命名',
+          content: '',
+          wordCount: 0,
+          order: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+      }
+    }).catch(() => {
+      useChapterStore.getState().setChapter(null);
+    });
+  }, [selectedNodeId]);
+
   // Auto-save: 2 seconds after user stops typing
   const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const doSave = useCallback(async () => {
     const projectPath = getProjectPath();
-    if (!projectPath || !isDirty) return;
+    if (!projectPath || !isDirty || !selectedNodeId) return;
     setSaveStatus('saving');
     try {
       const ch: Chapter = {
-        id: currentChapter?.id || `ch-${Date.now()}`,
-        title: currentChapter?.title || selectedNode?.title || '未命名',
+        id: selectedNodeId,
+        title: selectedNode?.title || '未命名',
         content: useChapterStore.getState().content,
         wordCount: useChapterStore.getState().wordCount,
-        order: currentChapter?.order || 0,
+        order: 0,
         createdAt: currentChapter?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };

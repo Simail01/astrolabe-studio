@@ -2,6 +2,7 @@ import React from 'react';
 import { GridSplit } from './GridSplit';
 import { useLayoutStore } from '../../stores/layout.store';
 import { OutlineEditor } from '../Outline/OutlineEditor';
+import { ChapterEditor } from '../Editor/ChapterEditor';
 
 const wrapper: React.CSSProperties = {
   display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden',
@@ -14,9 +15,7 @@ export const EditorArea: React.FC = () => {
     <div style={wrapper}>
       <GridSplit grid={panelLayout.grid}>
         <OutlineEditor />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666', fontSize: 14 }}>
-          打开文件开始创作
-        </div>
+        <ChapterEditor />
         {panelLayout.grid === '2x2' && (
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666', fontSize: 14 }}>面板 3</div>

@@ -28,14 +28,37 @@ export function registerWorkspaceHandlers(): void {
       fileService.mkdir(path.join(folderPath, 'fanlib'));
     }
 
-    // Scan for existing projects
+    // Scan for existing projects — check astrolabe.json OR outline/ directory
     const entries = fileService.readDir(folderPath);
     const projects: string[] = [];
     for (const entry of entries) {
-      const projectConfig = path.join(folderPath, entry, PROJECT_CONFIG);
-      if (fileService.exists(projectConfig)) {
-        projects.push(entry);
+      const entryPath = path.join(folderPath, entry);
+      // Skip non-directories and the fanlib folder
+      if (entry === 'fanlib') continue;
+      if (!fileService.exists(path.join(entryPath, 'outline')) &&
+          !fileService.exists(path.join(entryPath, PROJECT_CONFIG))) {
+        // Check for any project files (chapters, characters, wiki)
+        const hasChapters = fileService.exists(path.join(entryPath, 'chapters'));
+        const hasCharacters = fileService.exists(path.join(entryPath, 'characters'));
+        const hasWiki = fileService.exists(path.join(entryPath, 'wiki'));
+        if (!hasChapters && !hasCharacters && !hasWiki) continue;
       }
+      // Auto-repair: recreate astrolabe.json if missing but project files exist
+      const projectConfig = path.join(entryPath, PROJECT_CONFIG);
+      if (!fileService.exists(projectConfig)) {
+        const config = {
+          version: 1,
+          id: randomUUID(),
+          title: entry,
+          cover: '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          tags: [],
+          settings: { language: 'zh-CN', autoSaveInterval: 30 },
+        };
+        fileService.writeFile(projectConfig, JSON.stringify(config, null, 2));
+      }
+      projects.push(entry);
     }
     workspace.projects = projects;
 

@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useFanlibStore } from '../../stores/fanlib.store';
+import { useWorkspaceStore } from '../../stores/workspace.store';
+import { bridge } from '../../services/bridge';
 
 const overlay: React.CSSProperties = {
   position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)',
@@ -15,9 +17,44 @@ const btnSecondary: React.CSSProperties = { ...btn, backgroundColor: '#3c3c3c', 
 
 export const ImportDialog: React.FC = () => {
   const { importDialogOpen, importCardId, cards, closeImportDialog } = useFanlibStore();
+  const getProjectPath = useWorkspaceStore((s) => s.getProjectPath);
+  const [importing, setImporting] = useState(false);
   const card = cards.find((c) => c.id === importCardId);
 
   if (!importDialogOpen || !card) return null;
+
+  const handleImport = async () => {
+    const projectPath = getProjectPath();
+    if (!projectPath || !card) return;
+    setImporting(true);
+    try {
+      await bridge.wikiSave(projectPath, {
+        id: `wiki-char-${Date.now()}`,
+        type: 'person',
+        title: card.name,
+        aliases: card.aliases || [],
+        summary: (card as any).personality || '',
+        content: (card as any).background || '',
+        attributes: card.type === 'character' ? {
+          外貌: (card as any).appearance || '',
+          性格: (card as any).personality || '',
+          能力: ((card as any).abilities || []).join('、'),
+          来源: card.source?.title || '',
+        } : {},
+        relations: [],
+        sourceChapters: [],
+        confidence: 1,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        confirmedByUser: true,
+      });
+      closeImportDialog();
+    } catch (e) {
+      console.error('Import failed:', e);
+    } finally {
+      setImporting(false);
+    }
+  };
 
   return (
     <div style={overlay} onClick={closeImportDialog}>
@@ -29,7 +66,7 @@ export const ImportDialog: React.FC = () => {
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <button style={btnSecondary} onClick={closeImportDialog}>取消</button>
-          <button style={btnPrimary} onClick={closeImportDialog}>引入</button>
+          <button style={btnPrimary} onClick={handleImport} disabled={importing}>{importing ? '引入中...' : '引入'}</button>
         </div>
       </div>
     </div>

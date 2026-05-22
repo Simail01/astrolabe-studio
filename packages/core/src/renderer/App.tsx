@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { GlobalNav, AppMode, CreateStage } from './components/Shell/GlobalNav';
+import { GlobalNav, AppMode, CreateStage, VisualizeStage } from './components/Shell/GlobalNav';
 import { BottomBar } from './components/Shell/BottomBar';
 import { WritingPage } from './components/Pages/WritingPage';
 import { OutlinePage } from './components/Pages/OutlinePage';
 import { StoryboardViewer } from './components/Pipeline/StoryboardViewer';
+import { ComicPage } from './components/Pages/ComicPage';
 import { Explorer } from './components/Explorer/Explorer';
 import { WorkspaceDialog } from './components/Workspace/WorkspaceDialog';
 import { SettingsPanel } from './components/Settings/SettingsPanel';
@@ -18,6 +19,7 @@ export const App: React.FC = () => {
   useKeyboard();
   const [mode, setMode] = useState<AppMode>('create');
   const [stage, setStage] = useState<CreateStage>('outline');
+  const [vizStage, setVizStage] = useState<VisualizeStage>('storyboard');
   const [firstRun, setFirstRun] = useState(false);
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export const App: React.FC = () => {
       <SettingsPanel />
       <SettingsPanel forceOpen={firstRun} onKeyConfigured={() => setFirstRun(false)} />
 
-      <GlobalNav mode={mode} onModeChange={setMode} stage={stage} onStageChange={setStage} />
+      <GlobalNav mode={mode} onModeChange={setMode} stage={stage} onStageChange={setStage} vizStage={vizStage} onVizStageChange={setVizStage} />
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {mode === 'create' && <Explorer />}
@@ -45,7 +47,8 @@ export const App: React.FC = () => {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {mode === 'create' && stage === 'writing' && <WritingPage />}
           {mode === 'create' && stage === 'outline' && <OutlinePage />}
-          {mode === 'visualize' && <StoryboardViewer />}
+          {mode === 'visualize' && vizStage === 'storyboard' && <StoryboardViewer />}
+          {mode === 'visualize' && vizStage === 'comic' && <ComicPage />}
           {mode === 'perform' && (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 16 }}>
               演出模式 — 即将实现

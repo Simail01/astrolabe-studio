@@ -2,12 +2,15 @@ import React from 'react';
 
 export type AppMode = 'create' | 'visualize' | 'perform';
 export type CreateStage = 'outline' | 'writing';
+export type VisualizeStage = 'storyboard' | 'comic';
 
 interface Props {
   mode: AppMode;
   onModeChange: (mode: AppMode) => void;
   stage?: CreateStage;
   onStageChange?: (stage: CreateStage) => void;
+  vizStage?: VisualizeStage;
+  onVizStageChange?: (stage: VisualizeStage) => void;
 }
 
 const modes: { key: AppMode; label: string }[] = [
@@ -21,7 +24,12 @@ const createStages: { key: CreateStage; label: string }[] = [
   { key: 'writing', label: '写作' },
 ];
 
-export const GlobalNav: React.FC<Props> = ({ mode, onModeChange, stage, onStageChange }) => (
+const visualizeStages: { key: VisualizeStage; label: string }[] = [
+  { key: 'storyboard', label: '分镜' },
+  { key: 'comic', label: '漫画' },
+];
+
+export const GlobalNav: React.FC<Props> = ({ mode, onModeChange, stage, onStageChange, vizStage, onVizStageChange }) => (
   <div style={{
     height: 30, backgroundColor: 'var(--bg-panel)',
     display: 'flex', alignItems: 'center', padding: '0 16px', gap: 24,
@@ -45,15 +53,15 @@ export const GlobalNav: React.FC<Props> = ({ mode, onModeChange, stage, onStageC
       <>
         <span style={{ color: 'var(--border-default)', fontSize: 12 }}>│</span>
         {createStages.map(s => (
-          <span
-            key={s.key}
-            onClick={() => onStageChange(s.key)}
-            style={{
-              fontSize: 13, cursor: 'pointer',
-              color: stage === s.key ? 'var(--accent)' : 'var(--text-secondary)',
-              fontWeight: stage === s.key ? 500 : 400,
-            }}
-          >{s.label}</span>
+          <span key={s.key} onClick={() => onStageChange(s.key)} style={{ fontSize: 13, cursor: 'pointer', color: stage === s.key ? 'var(--accent)' : 'var(--text-secondary)', fontWeight: stage === s.key ? 500 : 400 }}>{s.label}</span>
+        ))}
+      </>
+    )}
+    {mode === 'visualize' && onVizStageChange && (
+      <>
+        <span style={{ color: 'var(--border-default)', fontSize: 12 }}>│</span>
+        {visualizeStages.map(s => (
+          <span key={s.key} onClick={() => onVizStageChange(s.key)} style={{ fontSize: 13, cursor: 'pointer', color: vizStage === s.key ? 'var(--accent)' : 'var(--text-secondary)', fontWeight: vizStage === s.key ? 500 : 400 }}>{s.label}</span>
         ))}
       </>
     )}

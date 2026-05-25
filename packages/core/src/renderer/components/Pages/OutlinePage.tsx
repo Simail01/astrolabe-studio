@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useOutlineStore } from '../../stores/outline.store';
 import { useWorkspaceStore } from '../../stores/workspace.store';
+import { useTemplateStore } from '../../stores/template.store';
+import { TemplateSelector } from '../Template/TemplateSelector';
 import { bridge } from '../../services/bridge';
 import type { OutlineNode, Outline } from '@astrolabe/shared';
 
@@ -97,12 +99,17 @@ export const OutlinePage: React.FC = () => {
     setOutline({ ...current, nodes, updatedAt: new Date().toISOString() } as any);
   };
 
+  const getSelectedTemplate = useTemplateStore(s => s.getSelectedTemplate);
+
   const handleAIGenerate = async () => {
     const prompt = aiPrompt.trim();
     if (!prompt) return;
     setGenerating(true); setGenError(''); setGenSuccess('');
     try {
-      const sysPrompt = '你是小说架构师。生成结构化大纲。每行一个节点，缩进表层级。格式：\n第一卷：标题\n  第1章：标题 — 概要\n  第2章：标题 — 概要';
+      const template = getSelectedTemplate('outline:generate');
+      const sysPrompt = template?.content
+        ? template.content.replace('{{prompt}}', prompt)
+        : '你是小说架构师。生成结构化大纲。每行一个节点，缩进表层级。格式：\n第一卷：标题\n  第1章：标题 — 概要\n  第2章：标题 — 概要';
       const result = await bridge.generateText(prompt, sysPrompt) as string;
       if (!result?.trim()) throw new Error('AI 返回空内容');
       const lines = result.split('\n').filter(l => l.trim());
@@ -144,10 +151,13 @@ export const OutlinePage: React.FC = () => {
           + 根节点
         </button>
         {!showAI ? (
-          <button onClick={() => setShowAI(true)}
-            style={{ padding: '4px 12px', fontSize: 12, backgroundColor: 'var(--accent)', color: 'var(--text-inverse)', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-            AI 生成
-          </button>
+          <>
+            <button onClick={() => setShowAI(true)}
+              style={{ padding: '4px 12px', fontSize: 12, backgroundColor: 'var(--accent)', color: 'var(--text-inverse)', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
+              AI 生成
+            </button>
+            <TemplateSelector stage="outline:generate" />
+          </>
         ) : (
           <div style={{ display: 'flex', gap: 4, flex: 1, maxWidth: 500 }}>
             <input value={aiPrompt} onChange={e => setAiPrompt(e.target.value)}

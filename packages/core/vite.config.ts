@@ -12,7 +12,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@astrolabe/shared': path.resolve(__dirname, '../../shared/src'),
+      '@astrolabe/shared': path.resolve(__dirname, '../shared/src'),
     },
   },
 });

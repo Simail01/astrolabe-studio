@@ -10,8 +10,10 @@ import { WorkspaceDialog } from './components/Workspace/WorkspaceDialog';
 import { SettingsPanel } from './components/Settings/SettingsPanel';
 import { CommandPalette } from './components/CommandPalette/CommandPalette';
 import { AIBubble } from './components/AI/AIBubble';
+import { TemplateEditor } from './components/Template/TemplateEditor';
 import { useKeyboard } from './hooks/useKeyboard';
 import { useWorkspaceStore } from './stores/workspace.store';
+import { useTemplateStore } from './stores/template.store';
 import { bridge } from './services/bridge';
 import type { Workspace } from '@astrolabe/shared';
 
@@ -33,11 +35,20 @@ export const App: React.FC = () => {
     bridge.getAIKey('deepseek').then(key => { if (!key) setFirstRun(true); });
   }, []);
 
+  // Load templates when workspace changes
+  const workspace = useWorkspaceStore(s => s.workspace);
+  useEffect(() => {
+    if (workspace) {
+      useTemplateStore.getState().loadTemplates(workspace.path);
+    }
+  }, [workspace]);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)' }}>
       <WorkspaceDialog />
       <SettingsPanel />
       <SettingsPanel forceOpen={firstRun} onKeyConfigured={() => setFirstRun(false)} />
+      <TemplateEditor />
 
       <GlobalNav mode={mode} onModeChange={setMode} stage={stage} onStageChange={setStage} vizStage={vizStage} onVizStageChange={setVizStage} />
 

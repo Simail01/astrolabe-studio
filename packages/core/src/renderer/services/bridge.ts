@@ -81,5 +81,13 @@ export const bridge = {
   pipelineGetStoryboard: (projectPath: string, chapterId: string) => api.invoke('pipeline:getStoryboard', projectPath, chapterId) as Promise<unknown>,
   pipelineSaveState: (projectPath: string, state: unknown) => api.invoke('pipeline:saveState', projectPath, state) as Promise<void>,
   pipelineGetState: (projectPath: string) => api.invoke('pipeline:getState', projectPath) as Promise<unknown>,
-  storyboardDecompose: (projectPath: string, chapterId: string) => api.invoke('storyboard:decompose', projectPath, chapterId) as Promise<unknown[]>,
+  storyboardDecompose: (projectPath: string, chapterId: string, templateId?: string, workspacePath?: string) => api.invoke('storyboard:decompose', projectPath, chapterId, templateId, workspacePath) as Promise<unknown[]>,
+
+  // Templates
+  templateListBuiltIn: () => api.invoke('template:listBuiltIn') as Promise<unknown[]>,
+  templateListByStage: (workspacePath: string, stage: string) => api.invoke('template:listByStage', workspacePath, stage) as Promise<unknown[]>,
+  templateGet: (workspacePath: string, templateId: string) => api.invoke('template:get', workspacePath, templateId) as Promise<unknown>,
+  templateSave: (workspacePath: string, template: unknown) => api.invoke('template:save', workspacePath, template) as Promise<void>,
+  templateDelete: (workspacePath: string, templateId: string) => api.invoke('template:delete', workspacePath, templateId) as Promise<void>,
+  templateCreateFromBuiltIn: (workspacePath: string, builtInId: string, name: string, content: string) => api.invoke('template:createFromBuiltIn', workspacePath, builtInId, name, content) as Promise<unknown>,
 };

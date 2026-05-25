@@ -8,6 +8,7 @@ import { registerFanlibHandlers } from './fanlib';
 import { registerDesignHandlers } from './design';
 import { registerPipelineHandlers } from './pipeline';
 import { registerStoryboardHandlers } from './storyboard';
+import { registerTemplateHandlers } from './template';
 import { registerDialogHandlers } from './dialog';
 import { registerWorkspaceHandlers } from './workspace';
 
@@ -22,6 +23,7 @@ export function registerAllHandlers(): void {
   registerDesignHandlers();
   registerPipelineHandlers();
   registerStoryboardHandlers();
+  registerTemplateHandlers();
   registerDialogHandlers();
   registerWorkspaceHandlers();
 }

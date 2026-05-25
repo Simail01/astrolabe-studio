@@ -3,6 +3,8 @@ import { useChapterStore } from '../../stores/chapter.store';
 import { useOutlineStore } from '../../stores/outline.store';
 import { useWikiStore } from '../../stores/wiki.store';
 import { useWorkspaceStore } from '../../stores/workspace.store';
+import { useTemplateStore } from '../../stores/template.store';
+import { TemplateSelector } from '../Template/TemplateSelector';
 import { bridge } from '../../services/bridge';
 import type { Chapter, OutlineNode, WikiEntry, Outline } from '@astrolabe/shared';
 
@@ -82,6 +84,7 @@ export const WritingPage: React.FC = () => {
   }, [content, isDirty, doSave]);
 
   // AI write
+  const getSelectedTemplate = useTemplateStore(s => s.getSelectedTemplate);
   const handleAIWrite = async () => {
     setAiGenerating(true);
     const startContent = useChapterStore.getState().content;
@@ -92,7 +95,12 @@ export const WritingPage: React.FC = () => {
     try {
       const relevantWiki = wikiEntries.filter(e => { const t = selectedNode?.title || ''; return e.title.includes(t) || t.includes(e.title); });
       const ctx = relevantWiki.map(e => `【${e.title}】${e.summary || e.content || ''}`).join('\n');
-      await bridge.generateTextStream(startContent ? `续写: ${startContent.slice(-500)}` : `撰写: ${selectedNode?.title}`, `你是专业小说作家。${ctx ? '\nWiki:\n' + ctx : ''}`);
+      const stage = startContent ? 'chapter:continue' : 'chapter:write';
+      const template = getSelectedTemplate(stage);
+      const sysPrompt = template?.content
+        ? template.content.replace('{{chapterTitle}}', selectedNode?.title || '').replace('{{wikiContext}}', ctx).replace('{{existingContent}}', startContent.slice(-500))
+        : `你是专业小说作家。${ctx ? '\nWiki:\n' + ctx : ''}`;
+      await bridge.generateTextStream(startContent ? `续写: ${startContent.slice(-500)}` : `撰写: ${selectedNode?.title}`, sysPrompt);
     } catch { unsubChunk(); unsubDone(); unsubError(); setAiGenerating(false); }
   };
 
@@ -153,7 +161,8 @@ export const WritingPage: React.FC = () => {
               {saveStatus === 'saved' && <span style={{ color: 'var(--color-success)' }}>已保存</span>}
               {saveStatus === 'idle' && isDirty && <span style={{ color: 'var(--color-warning)' }}>未保存</span>}
             </div>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <TemplateSelector stage="chapter:write" />
               <button onClick={handleAIWrite} disabled={!!aiGenerating || !selectedNodeId} style={{ padding: '4px 12px', fontSize: 11, backgroundColor: 'var(--accent)', color: 'var(--text-inverse)', border: 'none', borderRadius: 4, cursor: aiGenerating || !selectedNodeId ? 'not-allowed' : 'pointer', opacity: aiGenerating || !selectedNodeId ? 0.6 : 1 }}>{aiGenerating ? '生成中...' : 'AI 续写'}</button>
               <button onClick={doSave} disabled={!isDirty || !selectedNodeId} style={{ padding: '4px 12px', fontSize: 11, backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)', borderRadius: 4, cursor: !isDirty || !selectedNodeId ? 'not-allowed' : 'pointer', opacity: !isDirty || !selectedNodeId ? 0.5 : 1 }}>保存</button>
             </div>

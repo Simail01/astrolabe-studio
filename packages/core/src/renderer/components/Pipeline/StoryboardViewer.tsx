@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useWorkspaceStore } from '../../stores/workspace.store';
 import { useOutlineStore } from '../../stores/outline.store';
+import { useTemplateStore } from '../../stores/template.store';
+import { TemplateSelector } from '../Template/TemplateSelector';
 import { bridge } from '../../services/bridge';
 import type { Shot } from '@astrolabe/shared';
 
@@ -13,7 +15,9 @@ const angleLabels: Record<string, string> = {
 
 export const StoryboardViewer: React.FC = () => {
   const projectPath = useWorkspaceStore((s) => { const ws = s.workspace; const ap = s.activeProject; return ws && ap ? `${ws.path}/${ap}` : null; });
+  const workspacePath = useWorkspaceStore((s) => s.workspace?.path || null);
   const selectedNodeId = useOutlineStore((s) => s.selectedNodeId);
+  const getSelectedTemplate = useTemplateStore(s => s.getSelectedTemplate);
   const [shots, setShots] = useState<Shot[]>([]);
   const [selectedShotIdx, setSelectedShotIdx] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -33,11 +37,14 @@ export const StoryboardViewer: React.FC = () => {
     if (!projectPath || !selectedNodeId) return;
     setLoading(true); setError('');
     try {
-      const result = await bridge.storyboardDecompose(projectPath, selectedNodeId) as Shot[];
+      const template = getSelectedTemplate('storyboard:decompose');
+      const result = await bridge.storyboardDecompose(
+        projectPath, selectedNodeId,
+        template?.id, workspacePath || undefined,
+      ) as Shot[];
       if (result?.length) {
         setShots(result);
         setSelectedShotIdx(0);
-        // Save to disk
         await bridge.pipelineSaveStoryboard(projectPath, {
           id: `sb-${selectedNodeId}`,
           chapterId: selectedNodeId,
@@ -74,7 +81,6 @@ export const StoryboardViewer: React.FC = () => {
         } catch (e) { console.error(`Shot ${i + 1} failed:`, e); }
       }
       setShots(updatedShots);
-      // Save with generated image URLs
       await bridge.pipelineSaveStoryboard(projectPath, {
         id: `sb-${selectedNodeId}`,
         chapterId: selectedNodeId,
@@ -109,6 +115,9 @@ export const StoryboardViewer: React.FC = () => {
         {!shots.length ? (
           <div style={{ padding: 16, textAlign: 'center' }}>
             <div style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 12 }}>暂无分镜数据</div>
+            <div style={{ marginBottom: 8 }}>
+              <TemplateSelector stage="storyboard:decompose" />
+            </div>
             <button onClick={handleDecompose} disabled={loading}
               style={{ padding: '6px 16px', fontSize: 12, backgroundColor: 'var(--accent-dim)', color: 'var(--accent)', border: 'none', borderRadius: 4, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}>
               {loading ? 'AI 拆解中...' : 'AI 分镜拆解'}
@@ -162,7 +171,8 @@ export const StoryboardViewer: React.FC = () => {
                   <span style={{ display: 'inline-block', padding: '2px 6px', fontSize: 10, backgroundColor: 'var(--accent-dim)', color: 'var(--accent)', borderRadius: 3, marginRight: 4 }}>{angleLabels[shot.angle] || shot.angle}</span>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <TemplateSelector stage="storyboard:decompose" />
                 {shots.length > 0 && (
                   <button onClick={handleDecompose} disabled={loading}
                     style={{ padding: '4px 12px', fontSize: 12, backgroundColor: 'var(--accent-dim)', color: 'var(--accent)', border: 'none', borderRadius: 3, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}>

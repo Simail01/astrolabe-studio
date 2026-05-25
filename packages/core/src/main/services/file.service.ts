@@ -25,4 +25,8 @@ export const fileService = {
   mkdir(dirPath: string): void {
     fs.mkdirSync(dirPath, { recursive: true });
   },
+
+  deleteFile(filePath: string): void {
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  },
 };

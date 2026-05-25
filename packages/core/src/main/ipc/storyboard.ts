@@ -3,6 +3,8 @@ import path from 'path';
 import { fileService } from '../services/file.service';
 import { aiKeyStore } from '../services/keystore.service';
 import { wikiService } from '../services/wiki.service';
+import { templateService } from '../services/template.service';
+import { PromptManager } from '@astrolabe/ai';
 
 function parseJsonArray(raw: string): unknown[] {
   // Strip markdown code fences if present
@@ -25,7 +27,7 @@ function parseJsonArray(raw: string): unknown[] {
 }
 
 export function registerStoryboardHandlers(): void {
-  ipcMain.handle('storyboard:decompose', async (_event, projectPath: string, chapterId: string) => {
+  ipcMain.handle('storyboard:decompose', async (_event, projectPath: string, chapterId: string, templateId?: string, workspacePath?: string) => {
     // Read chapter content
     const chapterPath = path.join(projectPath, 'chapters');
     let chapterContent = '';
@@ -62,9 +64,21 @@ export function registerStoryboardHandlers(): void {
       }
     }
 
-    const { PromptManager } = await import('@astrolabe/ai');
-    const mgr = new PromptManager();
-    const prompt = mgr.loadAndRender('storyboard', 'decompose', { chapterContent, characterDesigns });
+    // Load template — use custom if provided, otherwise built-in
+    let prompt: string;
+    if (templateId && workspacePath) {
+      const template = templateService.getTemplate(workspacePath, templateId);
+      if (template) {
+        const mgr = new PromptManager();
+        prompt = mgr.render(template.content, { chapterContent, characterDesigns });
+      } else {
+        const mgr = new PromptManager();
+        prompt = mgr.loadAndRender('storyboard', 'decompose', { chapterContent, characterDesigns });
+      }
+    } else {
+      const mgr = new PromptManager();
+      prompt = mgr.loadAndRender('storyboard', 'decompose', { chapterContent, characterDesigns });
+    }
 
     const apiKey = aiKeyStore.getKey('deepseek');
     if (!apiKey) throw new Error('DeepSeek API Key 未配置。请在设置中配置 API Key。');

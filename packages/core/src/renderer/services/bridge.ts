@@ -9,6 +9,7 @@ export const bridge = {
   readDir: (path: string) => api.invoke('fs:readDir', path) as Promise<string[]>,
   exists: (path: string) => api.invoke('fs:exists', path) as Promise<boolean>,
   mkdir: (path: string) => api.invoke('fs:mkdir', path) as Promise<void>,
+  readFileBase64: (path: string) => api.invoke('fs:readFileBase64', path) as Promise<string>,
 
   // Project
   readProject: (path: string) => api.invoke('project:read', path) as Promise<AstrolabeConfig>,
@@ -31,6 +32,9 @@ export const bridge = {
 
   // Event listeners
   onFileChanged: (callback: (path: string) => void) => api.on('fs:fileChanged', callback as (...args: unknown[]) => void),
+
+  // Image
+  downloadImage: (url: string, destPath: string) => api.invoke('image:download', url, destPath) as Promise<string>,
 
   // AI
   generateText: (prompt: string, systemPrompt?: string) => api.invoke('ai:text:generate', prompt, systemPrompt) as Promise<string>,

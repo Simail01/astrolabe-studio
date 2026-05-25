@@ -23,6 +23,7 @@ export const StoryboardViewer: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [genProgress, setGenProgress] = useState('');
+  const [resolvedImageUrl, setResolvedImageUrl] = useState<string | null>(null);
 
   // Load existing storyboard
   useEffect(() => {
@@ -32,6 +33,14 @@ export const StoryboardViewer: React.FC = () => {
       if (data?.shots) { setShots(data.shots); setSelectedShotIdx(0); }
     }).catch(() => {});
   }, [projectPath, selectedNodeId]);
+
+  // Resolve local image paths to data URLs for display
+  useEffect(() => {
+    const s = shots[selectedShotIdx];
+    if (!s?.notes) { setResolvedImageUrl(null); return; }
+    if (s.notes.startsWith('http')) { setResolvedImageUrl(s.notes); return; }
+    bridge.readFileBase64(s.notes).then(setResolvedImageUrl).catch(() => setResolvedImageUrl(null));
+  }, [shots, selectedShotIdx]);
 
   const handleDecompose = async () => {
     if (!projectPath || !selectedNodeId) return;
@@ -76,7 +85,13 @@ export const StoryboardViewer: React.FC = () => {
           const prompt = `漫画风格，${shot.framing}，${shot.angle}。场景：${shot.scene || ''}。${charDesc}。氛围：${shot.mood || ''}。道具：${(shot.props || []).join('，')}`;
           const urls = await bridge.generateImage({ model, prompt, size: '2K' }) as string[];
           if (urls?.length) {
-            updatedShots[i] = { ...shot, notes: urls[0] };
+            let localUrl = urls[0];
+            try {
+              const localPath = `${projectPath}/storyboards/images/${shot.id}.png`;
+              await bridge.downloadImage(urls[0], localPath);
+              localUrl = localPath;
+            } catch { /* fall back to remote URL */ }
+            updatedShots[i] = { ...shot, notes: localUrl };
           }
         } catch (e) { console.error(`Shot ${i + 1} failed:`, e); }
       }
@@ -138,7 +153,7 @@ export const StoryboardViewer: React.FC = () => {
                 <span style={{ display: 'inline-block', padding: '2px 6px', fontSize: 10, backgroundColor: 'var(--accent)', color: 'var(--text-inverse)', borderRadius: 3, marginRight: 4 }}>{framingLabels[s.framing] || s.framing}</span>
                 <span style={{ display: 'inline-block', padding: '2px 6px', fontSize: 10, backgroundColor: 'var(--accent-dim)', color: 'var(--accent)', borderRadius: 3, marginRight: 4 }}>{angleLabels[s.angle] || s.angle}</span>
               </div>
-              {s.notes && <div style={{ fontSize: 10, color: 'var(--color-success)', marginTop: 2 }}>已生成图片</div>}
+              {s.notes && s.notes.startsWith('http') && <div style={{ fontSize: 10, color: 'var(--color-success)', marginTop: 2 }}>已生成图片</div>}
             </div>
           ))
         )}
@@ -226,10 +241,10 @@ export const StoryboardViewer: React.FC = () => {
             {shot.notes && (
               <div style={{ marginBottom: 14, borderTop: '1px solid var(--border-subtle)', paddingTop: 12 }}>
                 <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1 }}>生成结果</div>
-                <img src={shot.notes} alt={`镜头 ${selectedShotIdx + 1}`}
+                {resolvedImageUrl && <img src={resolvedImageUrl} alt={`镜头 ${selectedShotIdx + 1}`}
                   style={{ maxWidth: '100%', borderRadius: 6, border: '1px solid var(--border-subtle)' }}
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
+                />}
               </div>
             )}
           </>

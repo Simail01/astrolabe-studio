@@ -7,15 +7,19 @@ import { StoryboardViewer } from './components/Pipeline/StoryboardViewer';
 import { ComicPage } from './components/Pages/ComicPage';
 import { Explorer } from './components/Explorer/Explorer';
 import { WorkspaceDialog } from './components/Workspace/WorkspaceDialog';
+import { CreateProjectDialog } from './components/Project/CreateProjectDialog';
 import { SettingsPanel } from './components/Settings/SettingsPanel';
 import { CommandPalette } from './components/CommandPalette/CommandPalette';
 import { AIBubble } from './components/AI/AIBubble';
 import { TemplateEditor } from './components/Template/TemplateEditor';
+import { WikiPanel } from './components/Wiki/WikiPanel';
+import { FanlibPanel } from './components/Fanlib/FanlibPanel';
 import { useKeyboard } from './hooks/useKeyboard';
 import { useWorkspaceStore } from './stores/workspace.store';
+import { useLayoutStore } from './stores/layout.store';
 import { useTemplateStore } from './stores/template.store';
 import { bridge } from './services/bridge';
-import type { Workspace } from '@astrolabe/shared';
+import type { Workspace, AstrolabeConfig } from '@astrolabe/shared';
 
 export const App: React.FC = () => {
   useKeyboard();
@@ -23,6 +27,11 @@ export const App: React.FC = () => {
   const [stage, setStage] = useState<CreateStage>('outline');
   const [vizStage, setVizStage] = useState<VisualizeStage>('storyboard');
   const [firstRun, setFirstRun] = useState(false);
+  const rightPanelVisible = useLayoutStore((s) => s.rightPanelVisible);
+  const rightPanelMode = useLayoutStore((s) => s.rightPanelMode);
+  const createDialogOpen = useWorkspaceStore((s) => s.createDialogOpen);
+  const closeCreateDialog = useWorkspaceStore((s) => s.closeCreateDialog);
+  const workspace = useWorkspaceStore((s) => s.workspace);
 
   useEffect(() => {
     bridge.getLastWorkspace().then((wsPath) => {
@@ -36,7 +45,6 @@ export const App: React.FC = () => {
   }, []);
 
   // Load templates when workspace changes
-  const workspace = useWorkspaceStore(s => s.workspace);
   useEffect(() => {
     if (workspace) {
       useTemplateStore.getState().loadTemplates(workspace.path);
@@ -49,6 +57,19 @@ export const App: React.FC = () => {
       <SettingsPanel />
       <SettingsPanel forceOpen={firstRun} onKeyConfigured={() => setFirstRun(false)} />
       <TemplateEditor />
+      {createDialogOpen && workspace && (
+        <CreateProjectDialog
+          onClose={closeCreateDialog}
+          onCreated={(project: AstrolabeConfig) => {
+            useWorkspaceStore.getState().setWorkspace({
+              ...workspace,
+              projects: [...workspace.projects, project.title],
+            });
+            useWorkspaceStore.getState().setActiveProject(project.title);
+            closeCreateDialog();
+          }}
+        />
+      )}
 
       <GlobalNav mode={mode} onModeChange={setMode} stage={stage} onStageChange={setStage} vizStage={vizStage} onVizStageChange={setVizStage} />
 
@@ -66,6 +87,12 @@ export const App: React.FC = () => {
             </div>
           )}
         </div>
+
+        {rightPanelVisible && (
+          <div style={{ width: 320, borderLeft: '1px solid var(--border-subtle)', overflow: 'hidden', flexShrink: 0 }}>
+            {rightPanelMode === 'wiki' ? <WikiPanel /> : <FanlibPanel />}
+          </div>
+        )}
       </div>
 
       <BottomBar />

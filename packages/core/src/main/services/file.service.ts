@@ -29,4 +29,11 @@ export const fileService = {
   deleteFile(filePath: string): void {
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   },
+
+  readFileBase64(filePath: string): string {
+    const data = fs.readFileSync(filePath);
+    const ext = path.extname(filePath).toLowerCase().replace('.', '');
+    const mime = ext === 'jpg' ? 'image/jpeg' : `image/${ext || 'png'}`;
+    return `data:${mime};base64,${data.toString('base64')}`;
+  },
 };

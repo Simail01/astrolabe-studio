@@ -4,6 +4,28 @@ import { useOutlineStore } from '../../stores/outline.store';
 import { bridge } from '../../services/bridge';
 import type { Shot } from '@astrolabe/shared';
 
+async function resolveImageUrl(url: string): Promise<string> {
+  if (url.startsWith('http')) return url;
+  try { return await bridge.readFileBase64(url); } catch { return ''; }
+}
+
+function useImageUrls(panels: PanelData[]) {
+  const [urls, setUrls] = useState<Record<string, string>>({});
+  useEffect(() => {
+    const entries = panels.filter(p => p.imageUrl && !urls[p.imageUrl!]);
+    if (!entries.length) return;
+    (async () => {
+      const updates: Record<string, string> = {};
+      for (const p of entries) {
+        const key = p.imageUrl!;
+        updates[key] = await resolveImageUrl(key);
+      }
+      setUrls(prev => ({ ...prev, ...updates }));
+    })();
+  }, [panels]);
+  return urls;
+}
+
 type Layout = '2x2' | '3x2' | '1big3small' | '2x1';
 
 const layoutGrids: Record<Layout, { rows: number; cols: number; spans: { row: number; col: number; rowSpan: number; colSpan: number }[] }> = {
@@ -28,6 +50,7 @@ export const ComicPage: React.FC = () => {
   const [selectedPanel, setSelectedPanel] = useState(0);
   const [generating, setGenerating] = useState(false);
   const [genMsg, setGenMsg] = useState('');
+  const imageUrls = useImageUrls(panels);
 
   // Load storyboard shots
   useEffect(() => {
@@ -79,11 +102,19 @@ export const ComicPage: React.FC = () => {
       const prompt = `漫画风格，${shot.framing || 'medium'}，${shot.angle || 'eye-level'}。场景：${shot.scene || ''}。${charDesc}。氛围：${shot.mood || ''}。道具：${(shot.props || []).join('，')}`;
       const urls = await bridge.generateImage({ model, prompt, size: '2K' }) as string[];
       if (urls?.length) {
+        // Download to local file
+        let localUrl = urls[0];
+        try {
+          const imagesDir = `${projectPath}/storyboards/images`;
+          const localPath = `${imagesDir}/${panel.shotId}.png`;
+          await bridge.downloadImage(urls[0], localPath);
+          localUrl = localPath;
+        } catch { /* fall back to remote URL */ }
         const newPanels = [...panels];
-        newPanels[idx] = { ...panel, imageUrl: urls[0] };
+        newPanels[idx] = { ...panel, imageUrl: localUrl };
         setPanels(newPanels);
-        // Save image URL back to shot
-        const updatedShots = shots.map(s => s.id === panel.shotId ? { ...s, notes: urls[0] } : s);
+        // Save image path back to shot
+        const updatedShots = shots.map(s => s.id === panel.shotId ? { ...s, notes: localUrl } : s);
         setShots(updatedShots);
         await saveStoryboard(updatedShots);
       }
@@ -135,7 +166,7 @@ export const ComicPage: React.FC = () => {
 
         <div style={{ flex: 1, display: 'grid', gridTemplateRows: `repeat(${grid.rows}, 1fr)`, gridTemplateColumns: `repeat(${grid.cols}, 1fr)`, gap: 8 }}>
           {grid.spans.map((span, i) => {
-            const p = panels[i];
+            const p = panels[i] || {};
             return (
               <div key={i} onClick={() => setSelectedPanel(i)}
                 style={{
@@ -145,7 +176,7 @@ export const ComicPage: React.FC = () => {
                   display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', position: 'relative',
                 }}>
                 {p.imageUrl ? (
-                  <img src={p.imageUrl} alt={`面板 ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={imageUrls[p.imageUrl] || p.imageUrl} alt={`面板 ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
                     {p.shotTitle ? (

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useFanlibStore } from '../../stores/fanlib.store';
+import { CreateCardDialog } from './CreateCardDialog';
 
 const panel: React.CSSProperties = {
   display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#1e1e1e',
@@ -27,18 +28,21 @@ const typeLabels: Record<string, string> = { character: '人物', worldview: '�
 const types = ['character', 'worldview', 'item', 'faction'] as const;
 
 export const FanlibPanel: React.FC = () => {
-  const { filteredCards, selectedCardId, searchQuery, setSearchQuery, selectCard, openImportDialog } = useFanlibStore();
+  const { filteredCards, selectedCardId, searchQuery, setSearchQuery, selectCard, openImportDialog, openCreateCardDialog, createCardDialogOpen, closeCreateCardDialog } = useFanlibStore();
   const [activeType, setActiveType] = React.useState<string | null>(null);
 
   const displayCards = activeType ? filteredCards.filter((c) => c.type === activeType) : filteredCards;
 
   return (
     <div style={panel}>
-      <div style={typeBar}>
-        <div style={activeType === null ? typeTabActive : typeTab} onClick={() => setActiveType(null)}>全部</div>
-        {types.map((t) => (
-          <div key={t} style={activeType === t ? typeTabActive : typeTab} onClick={() => setActiveType(t)}>{typeLabels[t]}</div>
-        ))}
+      <div style={{ ...typeBar, justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex' }}>
+          <div style={activeType === null ? typeTabActive : typeTab} onClick={() => setActiveType(null)}>全部</div>
+          {types.map((t) => (
+            <div key={t} style={activeType === t ? typeTabActive : typeTab} onClick={() => setActiveType(t)}>{typeLabels[t]}</div>
+          ))}
+        </div>
+        <div style={{ ...typeTab, borderRight: 'none', fontWeight: 600 }} onClick={openCreateCardDialog} title="新建卡片">+</div>
       </div>
       <input style={searchInput} placeholder="搜索卡片…" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
       <div style={list}>
@@ -52,6 +56,7 @@ export const FanlibPanel: React.FC = () => {
           </div>
         ))}
       </div>
+      {createCardDialogOpen && <CreateCardDialog onClose={closeCreateCardDialog} />}
     </div>
   );
 };

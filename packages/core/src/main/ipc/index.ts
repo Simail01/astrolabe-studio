@@ -11,6 +11,7 @@ import { registerStoryboardHandlers } from './storyboard';
 import { registerTemplateHandlers } from './template';
 import { registerDialogHandlers } from './dialog';
 import { registerWorkspaceHandlers } from './workspace';
+import { registerImageHandlers } from './image';
 
 export function registerAllHandlers(): void {
   registerFileHandlers();
@@ -26,4 +27,5 @@ export function registerAllHandlers(): void {
   registerTemplateHandlers();
   registerDialogHandlers();
   registerWorkspaceHandlers();
+  registerImageHandlers();
 }

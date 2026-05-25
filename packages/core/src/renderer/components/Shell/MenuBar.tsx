@@ -38,7 +38,7 @@ export const MenuBar: React.FC = () => {
       label: '文件',
       items: [
         { label: '打开工作区…', action: async () => { close(); const folder = await bridge.selectFolder(); if (folder) { const ws = await bridge.openWorkspace(folder) as Workspace; useWorkspaceStore.getState().setWorkspace(ws); } } },
-        { label: '新建作品…', action: async () => { close(); const ws = useWorkspaceStore.getState().workspace; if (!ws) return alert('请先打开工作区'); const name = prompt('请输入作品名称'); if (!name?.trim()) return; const config = await bridge.createProject(ws.path, name.trim()); useWorkspaceStore.getState().setWorkspace({ ...ws, projects: [...ws.projects, (config as any).title || name.trim()] }); useWorkspaceStore.getState().setActiveProject((config as any).title || name.trim()); } },
+        { label: '新建作品…', action: () => { close(); const ws = useWorkspaceStore.getState().workspace; if (!ws) return alert('请先打开工作区'); useWorkspaceStore.getState().openCreateDialog(); } },
         { divider: true, label: '' },
         { label: '导出小说 (TXT)…', action: async () => { close(); const ws = useWorkspaceStore.getState(); const pp = ws.getProjectPath(); if (!pp) return alert('请先选择作品'); try { await bridge.exportNovel(pp, 'txt'); } catch (e) { alert('导出失败: ' + (e as Error).message); } } },
         { label: '导出小说 (EPUB)…', action: async () => { close(); const ws = useWorkspaceStore.getState(); const pp = ws.getProjectPath(); if (!pp) return alert('请先选择作品'); try { await bridge.exportNovel(pp, 'epub'); } catch (e) { alert('导出失败: ' + (e as Error).message); } } },

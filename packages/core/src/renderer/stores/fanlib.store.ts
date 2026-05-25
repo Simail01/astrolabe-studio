@@ -8,6 +8,7 @@ interface FanlibState {
   filteredCards: FanlibCard[];
   importDialogOpen: boolean;
   importCardId: string | null;
+  createCardDialogOpen: boolean;
   setCards: (cards: FanlibCard[]) => void;
   addOrUpdateCard: (card: FanlibCard) => void;
   removeCard: (id: string) => void;
@@ -15,6 +16,8 @@ interface FanlibState {
   setSearchQuery: (query: string) => void;
   openImportDialog: (cardId: string) => void;
   closeImportDialog: () => void;
+  openCreateCardDialog: () => void;
+  closeCreateCardDialog: () => void;
 }
 
 export const useFanlibStore = create<FanlibState>((set) => ({
@@ -24,6 +27,7 @@ export const useFanlibStore = create<FanlibState>((set) => ({
   filteredCards: [],
   importDialogOpen: false,
   importCardId: null,
+  createCardDialogOpen: false,
 
   setCards: (cards) => set({ cards, filteredCards: cards }),
 
@@ -60,4 +64,6 @@ export const useFanlibStore = create<FanlibState>((set) => ({
 
   openImportDialog: (cardId) => set({ importDialogOpen: true, importCardId: cardId }),
   closeImportDialog: () => set({ importDialogOpen: false, importCardId: null }),
+  openCreateCardDialog: () => set({ createCardDialogOpen: true }),
+  closeCreateCardDialog: () => set({ createCardDialogOpen: false }),
 }));

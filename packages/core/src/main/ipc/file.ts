@@ -21,4 +21,8 @@ export function registerFileHandlers(): void {
   ipcMain.handle('fs:mkdir', (_event, dirPath: string) => {
     fileService.mkdir(dirPath);
   });
+
+  ipcMain.handle('fs:readFileBase64', (_event, filePath: string) => {
+    return fileService.readFileBase64(filePath);
+  });
 }

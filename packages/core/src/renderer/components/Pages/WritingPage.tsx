@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useChapterStore } from '../../stores/chapter.store';
 import { useOutlineStore } from '../../stores/outline.store';
 import { useWikiStore } from '../../stores/wiki.store';
@@ -25,7 +25,10 @@ export const WritingPage: React.FC = () => {
   const activeProject = useWorkspaceStore(s => s.activeProject);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle');
+
   const selectedNode = outline?.nodes ? findNode(outline.nodes, selectedNodeId) : null;
+  const nodeList = outline?.nodes ? flatNodes(outline.nodes) : [];
+  const chapterOrder = selectedNodeId ? nodeList.findIndex(n => n.id === selectedNodeId) : -1;
 
   // Load chapter on node select
   useEffect(() => {
@@ -34,7 +37,7 @@ export const WritingPage: React.FC = () => {
     if (!pp) return;
     bridge.pipelineGetChapter(pp, selectedNodeId).then(data => {
       if (data) useChapterStore.getState().setChapter(data as Chapter);
-      else useChapterStore.getState().setChapter({ id: selectedNodeId, title: selectedNode?.title || '', content: '', wordCount: 0, order: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+      else useChapterStore.getState().setChapter({ id: selectedNodeId, title: selectedNode?.title || '', content: '', wordCount: 0, order: Math.max(0, chapterOrder), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
     }).catch(() => useChapterStore.getState().setChapter(null));
   }, [selectedNodeId]);
 
@@ -46,26 +49,37 @@ export const WritingPage: React.FC = () => {
     bridge.wikiSearch(pp, '').then(e => { if (e) useWikiStore.getState().setEntries(e as WikiEntry[]); }).catch(() => {});
   }, [activeProject, workspace]);
 
-  // Auto-save
+  // Save function (shared by auto-save and manual save)
+  const doSave = useCallback(async () => {
+    const pp = getProjectPath();
+    const store = useChapterStore.getState();
+    if (!pp || !selectedNodeId || !store.isDirty) return;
+    setSaveStatus('saving');
+    try {
+      const ch: Chapter = {
+        id: selectedNodeId,
+        title: selectedNode?.title || '',
+        content: store.content,
+        wordCount: store.wordCount,
+        order: Math.max(0, chapterOrder),
+        createdAt: store.currentChapter?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      await bridge.pipelineSaveChapter(pp, ch);
+      useChapterStore.getState().markClean();
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch { setSaveStatus('idle'); }
+  }, [selectedNodeId, selectedNode, chapterOrder]);
+
+  // Auto-save with debounce
   const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
   useEffect(() => {
     if (!isDirty) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(async () => {
-      const pp = getProjectPath();
-      const store = useChapterStore.getState();
-      if (!pp || !selectedNodeId || !store.isDirty) return;
-      setSaveStatus('saving');
-      try {
-        const ch: Chapter = { id: selectedNodeId, title: selectedNode?.title || '', content: store.content, wordCount: store.wordCount, order: 0, createdAt: store.currentChapter?.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() };
-        await bridge.pipelineSaveChapter(pp, ch);
-        useChapterStore.getState().markClean();
-        setSaveStatus('saved');
-        setTimeout(() => setSaveStatus('idle'), 2000);
-      } catch { setSaveStatus('idle'); }
-    }, 2000);
+    saveTimerRef.current = setTimeout(doSave, 2000);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
-  }, [content, isDirty]);
+  }, [content, isDirty, doSave]);
 
   // AI write
   const handleAIWrite = async () => {
@@ -83,16 +97,14 @@ export const WritingPage: React.FC = () => {
   };
 
   const relevantWiki = wikiEntries.filter(e => { const t = selectedNode?.title || ''; return e.title.includes(t) || t.includes(e.title) || e.aliases?.some((a: string) => t.includes(a)); });
-  const nodeList = outline?.nodes || [];
   const projectPath = getProjectPath();
 
-  // Empty state — no workspace or no project selected
+  // Empty state
   if (!workspace || !activeProject || !projectPath) {
     return (
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', gap: 12 }}>
         <div style={{ fontSize: 48, opacity: 0.3 }}>📝</div>
         <div style={{ fontSize: 16 }}>{!workspace ? '请先打开工作区' : '请先在左侧选择一个作品'}</div>
-        <div style={{ fontSize: 13 }}>{!workspace ? '点击欢迎页的"打开文件夹"开始' : '在 Explorer 中点击作品名称'}</div>
       </div>
     );
   }
@@ -102,7 +114,7 @@ export const WritingPage: React.FC = () => {
       {/* Chapter list */}
       <div style={{ width: 160, minWidth: 120, backgroundColor: 'var(--bg-panel)', borderRight: '1px solid var(--border-subtle)', overflow: 'auto', flexShrink: 0 }}>
         <div style={{ padding: '8px 12px', fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1 }}>章节</div>
-        {flatNodes(nodeList).map(n => (
+        {nodeList.map(n => (
           <div key={n.id} onClick={() => useOutlineStore.getState().selectNode(n.id)} style={{
             padding: '6px 12px', cursor: 'pointer', fontSize: 13, color: n.id === selectedNodeId ? 'var(--text-inverse)' : 'var(--text-secondary)',
             backgroundColor: n.id === selectedNodeId ? 'var(--accent-dim)' : 'transparent',
@@ -120,8 +132,9 @@ export const WritingPage: React.FC = () => {
           <textarea
             value={content}
             onChange={e => setContent(e.target.value)}
-            placeholder="开始写作..."
+            placeholder={selectedNodeId ? '开始写作...' : '请在左侧选择一个章节'}
             spellCheck={false}
+            disabled={!selectedNodeId}
             style={{
               width: '100%', maxWidth: 700, height: '100%', padding: '32px 24px',
               backgroundColor: 'transparent', border: 'none', outline: 'none', resize: 'none',
@@ -141,8 +154,8 @@ export const WritingPage: React.FC = () => {
               {saveStatus === 'idle' && isDirty && <span style={{ color: 'var(--color-warning)' }}>未保存</span>}
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={handleAIWrite} disabled={!!aiGenerating} style={{ padding: '4px 12px', fontSize: 11, backgroundColor: 'var(--accent)', color: 'var(--text-inverse)', border: 'none', borderRadius: 4, cursor: aiGenerating ? 'not-allowed' : 'pointer', opacity: aiGenerating ? 0.6 : 1 }}>{aiGenerating ? '生成中...' : 'AI 续写'}</button>
-              <button onClick={() => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); }} style={{ padding: '4px 12px', fontSize: 11, backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)', borderRadius: 4, cursor: 'pointer' }}>保存</button>
+              <button onClick={handleAIWrite} disabled={!!aiGenerating || !selectedNodeId} style={{ padding: '4px 12px', fontSize: 11, backgroundColor: 'var(--accent)', color: 'var(--text-inverse)', border: 'none', borderRadius: 4, cursor: aiGenerating || !selectedNodeId ? 'not-allowed' : 'pointer', opacity: aiGenerating || !selectedNodeId ? 0.6 : 1 }}>{aiGenerating ? '生成中...' : 'AI 续写'}</button>
+              <button onClick={doSave} disabled={!isDirty || !selectedNodeId} style={{ padding: '4px 12px', fontSize: 11, backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)', borderRadius: 4, cursor: !isDirty || !selectedNodeId ? 'not-allowed' : 'pointer', opacity: !isDirty || !selectedNodeId ? 0.5 : 1 }}>保存</button>
             </div>
           </div>
         </div>

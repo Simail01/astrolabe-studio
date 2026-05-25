@@ -24,7 +24,7 @@ export const pipelineService = {
   saveChapter(projectPath: string, chapter: Chapter): void {
     const dir = path.join(projectPath, 'chapters');
     ensureDir(dir);
-    fileService.writeFile(path.join(dir, `ch-${String(chapter.order).padStart(3, '0')}.json`), JSON.stringify(chapter, null, 2));
+    fileService.writeFile(path.join(dir, `${chapter.id}.json`), JSON.stringify(chapter, null, 2));
   },
 
   getChapter(projectPath: string, chapterId: string): Chapter | null {

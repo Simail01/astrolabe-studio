@@ -1,9 +1,37 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
 out/
 release/
+
+# Environment
 .env
+
+# Logs
 *.log
+
+# Temp files
 temp/
-.superpowers/
+
+# Turbo
 .turbo/
+
+# Claude Code
+.claude/
+CLAUDE.md
+
+# Documentation (non-source)
+docs/
+
+# Product docs
+星盘工坊*.md
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

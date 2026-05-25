@@ -1,4 +1,5 @@
 import React from 'react';
+import { MenuBar } from './MenuBar';
 
 export type AppMode = 'create' | 'visualize' | 'perform';
 export type CreateStage = 'outline' | 'writing';
@@ -32,10 +33,12 @@ const visualizeStages: { key: VisualizeStage; label: string }[] = [
 export const GlobalNav: React.FC<Props> = ({ mode, onModeChange, stage, onStageChange, vizStage, onVizStageChange }) => (
   <div style={{
     height: 30, backgroundColor: 'var(--bg-panel)',
-    display: 'flex', alignItems: 'center', padding: '0 16px', gap: 24,
+    display: 'flex', alignItems: 'center', padding: '0 8px', gap: 16,
     borderBottom: '1px solid var(--border-subtle)', userSelect: 'none', flexShrink: 0,
   }}>
-    <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--accent)', marginRight: 8 }}>星盘工坊</span>
+    <MenuBar />
+    <span style={{ color: 'var(--border-default)', fontSize: 12 }}>│</span>
+    <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--accent)' }}>星盘工坊</span>
     {modes.map(m => (
       <span
         key={m.key}

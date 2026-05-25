@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useCommandStore } from '../stores/command.store';
+import { useLayoutStore } from '../stores/layout.store';
 
 export function useKeyboard(): void {
   useEffect(() => {
@@ -9,6 +10,24 @@ export function useKeyboard(): void {
       if (mod && e.shiftKey && e.key.toLowerCase() === 'p') {
         e.preventDefault();
         useCommandStore.getState().togglePalette();
+        return;
+      }
+
+      if (mod && !e.shiftKey && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        useLayoutStore.getState().toggleSidebar();
+        return;
+      }
+
+      if (mod && !e.shiftKey && e.key.toLowerCase() === 'r') {
+        e.preventDefault();
+        useLayoutStore.getState().toggleRightPanel();
+        return;
+      }
+
+      if (mod && !e.shiftKey && e.key === ',') {
+        e.preventDefault();
+        useLayoutStore.getState().toggleSettings();
         return;
       }
 

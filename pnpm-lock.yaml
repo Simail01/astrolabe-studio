@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      electron-builder:
+        specifier: ^25.0.0
+        version: 25.1.8(electron-builder-squirrel-windows@25.1.8)
       turbo:
         specifier: ^2.0.0
         version: 2.9.14
@@ -58,9 +61,6 @@ importers:
       electron:
         specifier: ^30.0.0
         version: 30.5.1
-      electron-builder:
-        specifier: ^25.0.0
-        version: 25.1.8(electron-builder-squirrel-windows@25.1.8)
       react:
         specifier: ^18.3.0
         version: 18.3.1

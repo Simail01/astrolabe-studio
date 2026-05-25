@@ -36,6 +36,7 @@ export function registerWikiHandlers(): void {
     const { PromptManager } = await import('@astrolabe/ai');
     const mgr = new PromptManager();
     const prompt = mgr.loadAndRender('wiki', 'extract', {
+      chapterTitle: chapterTitle || '（未命名）',
       existingEntries: existingStr || '（暂无已有条目）',
       chapterContent,
     });

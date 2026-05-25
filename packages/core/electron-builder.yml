@@ -1,0 +1,33 @@
+appId: com.astrolabe.studio
+productName: 星盘工坊
+copyright: Copyright © 2024 Astrolabe Studio
+
+directories:
+  output: release
+
+files:
+  - dist/**/*
+  - node_modules/**/*
+  - "!node_modules/**/{test,tests,__tests__}/**"
+  - "!node_modules/**/*.{md,ts,map}"
+
+extraResources:
+  - from: "../ai/dist/prompts"
+    to: "prompts"
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: null
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: 星盘工坊
+
+asar: true
+asarUnpack:
+  - "node_modules/chokidar/**/*"

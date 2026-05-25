@@ -1,11 +1,24 @@
 import fs from 'fs';
 import path from 'path';
 
+function resolveDefaultTemplateDir(): string {
+  // Development / asar-packed: prompts are next to the compiled index.js
+  const local = path.join(__dirname, 'prompts');
+  if (fs.existsSync(local)) return local;
+  // Packaged app: prompts copied to resources via extraResources
+  const resPath = (process as any).resourcesPath;
+  if (resPath) {
+    const resDir = path.join(resPath, 'prompts');
+    if (fs.existsSync(resDir)) return resDir;
+  }
+  return local; // fallback
+}
+
 export class PromptManager {
   private templateDir: string;
 
   constructor(templateDir?: string) {
-    this.templateDir = templateDir ?? path.join(__dirname, 'prompts');
+    this.templateDir = templateDir ?? resolveDefaultTemplateDir();
   }
 
   loadTemplate(category: string, name: string): string {

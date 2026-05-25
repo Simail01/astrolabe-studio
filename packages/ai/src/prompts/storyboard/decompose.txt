@@ -1,9 +1,54 @@
-将以下章节内容拆解为漫画分镜脚本。
+你是一个专业的漫画分镜师。请将以下章节内容拆解为漫画分镜脚本。
 
 ## 章节内容
 {{chapterContent}}
 
-## 角色设定图参考
+## 角色设定参考
 {{characterDesigns}}
 
-请按镜头号输出：景别、角度、场景、角色动作、对话。
+## 输出要求
+
+请严格输出一个 JSON 数组，不要包含任何其他文字、说明或 markdown 标记。每个镜头对象必须包含以下字段：
+
+```json
+[
+  {
+    "order": 1,
+    "scene": "场景描述（地点、时间、环境）",
+    "framing": "景别",
+    "angle": "角度",
+    "characters": [
+      {
+        "characterId": "角色名",
+        "pose": "姿态描述",
+        "expression": "表情描述"
+      }
+    ],
+    "dialogue": [
+      {
+        "speakerId": "说话者",
+        "text": "对话内容",
+        "type": "speech"
+      }
+    ],
+    "props": ["道具1", "道具2"],
+    "mood": "氛围关键词",
+    "notes": "分镜师备注"
+  }
+]
+```
+
+## 字段取值规范
+
+- framing（景别）只能是以下之一：extreme-long、long、medium、close-up、extreme-close-up
+- angle（角度）只能是以下之一：eye-level、high-angle、low-angle、bird-eye、dutch
+- dialogue.type（对话类型）只能是以下之一：speech（对话）、thought（内心独白）、narration（旁白）
+
+## 拆解原则
+
+1. 每个镜头对应一个画面，保持叙事节奏流畅
+2. 对话多的场景适当拆分为多个镜头，避免单镜头信息过载
+3. 重要情感转折使用特写（close-up）或大特写（extreme-close-up）
+4. 环境交代使用全景（long）或远景（extreme-long）
+5. 一般叙事使用中景（medium）
+6. 角色情绪和姿态要具体描述，便于后续画面生成

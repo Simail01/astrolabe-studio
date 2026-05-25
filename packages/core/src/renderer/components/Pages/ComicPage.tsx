@@ -24,7 +24,7 @@ export const ComicPage: React.FC = () => {
   const selectedNodeId = useOutlineStore((s) => s.selectedNodeId);
   const [shots, setShots] = useState<Shot[]>([]);
   const [layout, setLayout] = useState<Layout>('2x2');
-  const [panels, setPanels] = useState<PanelData[]>([]);
+  const [panels, setPanels] = useState<PanelData[]>(() => Array.from({ length: layoutGrids['2x2'].spans.length }, () => ({})));
   const [selectedPanel, setSelectedPanel] = useState(0);
   const [generating, setGenerating] = useState(false);
   const [genMsg, setGenMsg] = useState('');

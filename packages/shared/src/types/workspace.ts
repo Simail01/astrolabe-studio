@@ -4,6 +4,7 @@ export interface Workspace {
   path: string;
   projects: string[];
   fanlibPath: string;
+  lastOpened?: Record<string, string>;
 }
 
 export interface WorkspaceSession {

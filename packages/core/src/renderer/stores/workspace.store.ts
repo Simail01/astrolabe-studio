@@ -17,9 +17,20 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   activeProject: null,
   createDialogOpen: false,
 
-  setWorkspace: (workspace) => set({ workspace, activeProject: null }),
+  setWorkspace: (workspace) => set((state) => ({ workspace, activeProject: workspace ? state.activeProject : null })),
 
-  setActiveProject: (project) => set({ activeProject: project }),
+  setActiveProject: (project) => {
+    const { workspace } = get();
+    if (workspace && project) {
+      const updated = {
+        ...workspace,
+        lastOpened: { ...workspace.lastOpened, [project]: new Date().toISOString() },
+      };
+      set({ activeProject: project, workspace: updated });
+    } else {
+      set({ activeProject: project });
+    }
+  },
 
   openCreateDialog: () => set({ createDialogOpen: true }),
   closeCreateDialog: () => set({ createDialogOpen: false }),

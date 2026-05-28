@@ -25,4 +25,8 @@ export function registerFileHandlers(): void {
   ipcMain.handle('fs:readFileBase64', (_event, filePath: string) => {
     return fileService.readFileBase64(filePath);
   });
+
+  ipcMain.handle('fs:rename', (_event, oldPath: string, newPath: string) => {
+    fileService.rename(oldPath, newPath);
+  });
 }

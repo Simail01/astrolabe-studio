@@ -1,0 +1,18 @@
+{
+  "id": "wiki-qingshishan",
+  "type": "location",
+  "title": "青石山",
+  "aliases": [],
+  "summary": "林家村附近的山脉，林远采药之地，也是仙剑残片的发现地。",
+  "content": "青石山山势险峻，北崖最为陡峭。山中多有珍稀药材，是林家村民采药的主要来源。传说山中有仙人遗迹。",
+  "attributes": {
+    "位置": "林家村附近",
+    "特点": "山势险峻，多药材"
+  },
+  "relations": [
+    { "targetId": "wiki-linjiacun", "relationType": "相邻", "description": "山脚下即为林家村" }
+  ],
+  "sourceChapters": ["chapter-001"],
+  "confidence": "confirmed",
+  "confirmedByUser": true
+}

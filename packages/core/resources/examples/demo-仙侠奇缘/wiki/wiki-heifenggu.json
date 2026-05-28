@@ -1,0 +1,19 @@
+{
+  "id": "wiki-heifenggu",
+  "type": "location",
+  "title": "黑风谷",
+  "summary": "林家村北部的险要山谷，常有妖兽出没。",
+  "content": "黑风谷位于青石山北麓，因谷中常年阴风阵阵而得名。谷内林木茂密，光线昏暗，是妖兽聚集之地。寻常村民不敢靠近，只有经验丰富的猎户偶尔在谷口狩猎。",
+  "aliases": ["黑风山"],
+  "attributes": {
+    "位置": "青石山北麓",
+    "危险等级": "中等",
+    "常驻妖兽": "黑风狼"
+  },
+  "relations": [
+    { "relationType": "位于", "targetId": "wiki-qingshishan", "description": "黑风谷是青石山的一部分" }
+  ],
+  "foreshadows": [],
+  "createdAt": "2026-05-26T00:00:00.000Z",
+  "updatedAt": "2026-05-26T00:00:00.000Z"
+}

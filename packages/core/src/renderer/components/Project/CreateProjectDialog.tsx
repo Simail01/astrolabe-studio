@@ -8,19 +8,19 @@ const overlay: React.CSSProperties = {
   backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100,
 };
 const dialog: React.CSSProperties = {
-  backgroundColor: '#252526', borderRadius: 8, padding: 24, width: 420, color: '#ccc', boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+  backgroundColor: 'var(--editor-panel)', borderRadius: 8, padding: 24, width: 420, color: 'var(--text-primary)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
 };
-const dialogTitle: React.CSSProperties = { fontSize: 18, color: '#fff', marginBottom: 16 };
+const dialogTitle: React.CSSProperties = { fontSize: 18, color: 'var(--text-inverse)', marginBottom: 16 };
 const field: React.CSSProperties = { marginBottom: 14 };
-const label: React.CSSProperties = { display: 'block', fontSize: 13, color: '#999', marginBottom: 4 };
+const label: React.CSSProperties = { display: 'block', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 4 };
 const input: React.CSSProperties = {
-  width: '100%', padding: '6px 10px', fontSize: 14, backgroundColor: '#3c3c3c', border: '1px solid #555', color: '#fff', borderRadius: 4, outline: 'none',
+  width: '100%', padding: '6px 10px', fontSize: 14, backgroundColor: 'var(--bg-control)', border: '1px solid var(--border-input)', color: 'var(--text-inverse)', borderRadius: 4, outline: 'none',
 };
 const textarea: React.CSSProperties = { ...input, resize: 'vertical', minHeight: 60, fontFamily: 'inherit' };
 const btnRow: React.CSSProperties = { display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 };
 const btn: React.CSSProperties = { padding: '8px 20px', fontSize: 13, borderRadius: 4, cursor: 'pointer', border: 'none' };
-const btnPrimary: React.CSSProperties = { ...btn, backgroundColor: '#007acc', color: '#fff' };
-const btnSecondary: React.CSSProperties = { ...btn, backgroundColor: '#3c3c3c', color: '#ccc' };
+const btnPrimary: React.CSSProperties = { ...btn, backgroundColor: 'var(--accent-blue)', color: 'var(--text-inverse)' };
+const btnSecondary: React.CSSProperties = { ...btn, backgroundColor: 'var(--bg-control)', color: 'var(--text-primary)' };
 
 const genreOptions = ['玄幻', '武侠', '都市', '科幻', '历史', '悬疑', '言情', '轻小说', '其他'];
 
@@ -67,9 +67,9 @@ export const CreateProjectDialog: React.FC<Props> = ({ onClose, onCreated }) => 
                 key={g}
                 onClick={() => setGenre(g === genre ? '' : g)}
                 style={{
-                  padding: '3px 10px', fontSize: 12, borderRadius: 12, cursor: 'pointer', border: '1px solid #555',
-                  backgroundColor: genre === g ? '#007acc' : 'transparent',
-                  color: genre === g ? '#fff' : '#999',
+                  padding: '3px 10px', fontSize: 12, borderRadius: 12, cursor: 'pointer', border: '1px solid var(--border-input)',
+                  backgroundColor: genre === g ? 'var(--accent-blue)' : 'transparent',
+                  color: genre === g ? 'var(--text-inverse)' : 'var(--text-secondary)',
                 }}
               >
                 {g}

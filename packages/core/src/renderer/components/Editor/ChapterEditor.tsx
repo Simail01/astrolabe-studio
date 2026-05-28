@@ -5,37 +5,58 @@ import { useWorkspaceStore } from '../../stores/workspace.store';
 import { bridge } from '../../services/bridge';
 import { useWikiStore } from '../../stores/wiki.store';
 import { useLayoutStore } from '../../stores/layout.store';
-import type { OutlineNode, Chapter, WikiEntry, WikiSuggestion } from '@astrolabe/shared';
+import type { OutlineNode, Chapter, ChapterStatus, WikiEntry, WikiSuggestion } from '@astrolabe/shared';
+import { toast } from '../../stores/toast.store';
+import { EmptyState } from '../ui/EmptyState';
 
 const container: React.CSSProperties = {
-  display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#1e1e1e',
+  display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: 'var(--editor-bg)',
 };
 const toolbar: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 12px', borderBottom: '1px solid #3c3c3c', gap: 8,
+  display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 12px', borderBottom: '1px solid var(--border-default)', gap: 8,
 };
 const title: React.CSSProperties = {
-  fontSize: 14, fontWeight: 600, color: '#fff',
+  fontSize: 14, fontWeight: 600, color: 'var(--text-inverse)',
 };
 const info: React.CSSProperties = {
-  fontSize: 12, color: '#999',
+  fontSize: 12, color: 'var(--text-secondary)',
 };
 const textarea: React.CSSProperties = {
-  flex: 1, padding: 16, backgroundColor: '#1e1e1e', color: '#ccc', border: 'none', outline: 'none', resize: 'none', fontSize: 14, fontFamily: '"Microsoft YaHei", "Noto Sans SC", sans-serif', lineHeight: 1.8,
+  flex: 1, padding: 16, backgroundColor: 'var(--editor-bg)', color: 'var(--text-primary)', border: 'none', outline: 'none', resize: 'none', fontSize: 14, fontFamily: '"Microsoft YaHei", "Noto Sans SC", sans-serif', lineHeight: 1.8,
 };
 const btn: React.CSSProperties = {
-  padding: '4px 12px', fontSize: 12, backgroundColor: '#007acc', color: '#fff', border: 'none', borderRadius: 3, cursor: 'pointer',
+  padding: '4px 12px', fontSize: 12, backgroundColor: 'var(--accent-blue)', color: 'var(--text-inverse)', border: 'none', borderRadius: 3, cursor: 'pointer',
 };
 const btnDisabled: React.CSSProperties = { ...btn, opacity: 0.5, cursor: 'not-allowed' };
+
+const STATUS_LABELS: Record<ChapterStatus, string> = {
+  draft: '草稿',
+  writing: '写作中',
+  revision: '待修订',
+  final: '已定稿',
+};
+
+const STATUS_COLORS: Record<ChapterStatus, string> = {
+  draft: 'var(--text-secondary)',
+  writing: 'var(--accent-blue)',
+  revision: 'var(--color-warning-text)',
+  final: 'var(--color-success-text)',
+};
+
+const statusBtnBase: React.CSSProperties = {
+  padding: '2px 8px', fontSize: 11, border: '1px solid var(--border-default)', borderRadius: 3, cursor: 'pointer', backgroundColor: 'transparent',
+};
 
 interface Props {
   projectPath?: string;
 }
 
 export const ChapterEditor: React.FC<Props> = () => {
-  const { currentChapter, content, wordCount, isDirty, setContent } = useChapterStore();
+  const { currentChapter, content, wordCount, isDirty, setContent, updateStatus } = useChapterStore();
   const selectedNodeId = useOutlineStore((s) => s.selectedNodeId);
   const outline = useOutlineStore((s) => s.outline);
   const getProjectPath = useWorkspaceStore((s) => s.getProjectPath);
+  const workspace = useWorkspaceStore((s) => s.workspace);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [extracting, setExtracting] = useState(false);
@@ -61,11 +82,14 @@ export const ChapterEditor: React.FC<Props> = () => {
           content: '',
           wordCount: 0,
           order: 0,
+          status: 'draft',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         });
       }
-    }).catch(() => {
+    }).catch((e) => {
+      console.error('Load chapter failed:', e);
+      toast.error(e.message || '加载章节失败');
       useChapterStore.getState().setChapter(null);
     });
   }, [selectedNodeId]);
@@ -86,6 +110,7 @@ export const ChapterEditor: React.FC<Props> = () => {
         content: store.content,
         wordCount: store.wordCount,
         order: 0,
+        status: store.currentChapter?.status || 'draft',
         createdAt: store.currentChapter?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -93,8 +118,9 @@ export const ChapterEditor: React.FC<Props> = () => {
       useChapterStore.getState().markClean();
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
-    } catch (e) {
+    } catch (e: any) {
       console.error('Save failed:', e);
+      toast.error(e.message || '保存失败');
       setSaveStatus('idle');
     }
   }, [getProjectPath]);
@@ -133,9 +159,7 @@ export const ChapterEditor: React.FC<Props> = () => {
 
   if (!currentChapter && !selectedNode) {
     return (
-      <div style={{ ...container, alignItems: 'center', justifyContent: 'center', color: '#666', fontSize: 14 }}>
-        在大纲中选择一个节点开始写作
-      </div>
+      <EmptyState variant="inline" title="在大纲中选择一个节点开始写作" />
     );
   }
 
@@ -146,14 +170,34 @@ export const ChapterEditor: React.FC<Props> = () => {
       <div style={toolbar}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={title}>{displayTitle}</span>
-          {saveStatus === 'saving' && <span style={{ fontSize: 11, color: '#dcdcaa' }}>◉ 保存中…</span>}
-          {saveStatus === 'saved' && <span style={{ fontSize: 11, color: '#4ec9b0' }}>✓ 已保存</span>}
-          {saveStatus === 'idle' && isDirty && <span style={{ fontSize: 11, color: '#d4a72c' }}>● 未保存</span>}
+          <div style={{ display: 'flex', gap: 4 }}>
+            {(Object.keys(STATUS_LABELS) as ChapterStatus[]).map((s) => (
+              <button
+                key={s}
+                style={{
+                  ...statusBtnBase,
+                  color: currentChapter?.status === s ? STATUS_COLORS[s] : 'var(--text-secondary)',
+                  borderColor: currentChapter?.status === s ? STATUS_COLORS[s] : 'var(--border-default)',
+                  fontWeight: currentChapter?.status === s ? 600 : 400,
+                }}
+                onClick={() => {
+                  updateStatus(s);
+                  if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+                  saveTimerRef.current = setTimeout(doSave, 500);
+                }}
+              >
+                {STATUS_LABELS[s]}
+              </button>
+            ))}
+          </div>
+          {saveStatus === 'saving' && <span style={{ fontSize: 11, color: 'var(--color-warning-text)' }}>◉ 保存中…</span>}
+          {saveStatus === 'saved' && <span style={{ fontSize: 11, color: 'var(--color-success-text)' }}>✓ 已保存</span>}
+          {saveStatus === 'idle' && isDirty && <span style={{ fontSize: 11, color: 'var(--color-unsaved)' }}>● 未保存</span>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={info}>{wordCount} 字</span>
           <button
-            style={{ ...btn, backgroundColor: isDirty ? '#d4a72c' : '#3c3c3c' }}
+            style={{ ...btn, backgroundColor: isDirty ? 'var(--color-unsaved)' : 'var(--bg-hover)' }}
             onClick={() => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); doSave(); }}
             title="保存 (Ctrl+S)"
           >
@@ -210,9 +254,13 @@ export const ChapterEditor: React.FC<Props> = () => {
 
                 await bridge.generateTextStream(
                   startContent ? `请续写以下内容：\n\n${startContent.slice(-500)}` : `请撰写章节：${selectedNode?.title}`,
-                  systemPrompt
+                  systemPrompt,
+                  workspace?.path,
+                  startContent ? 'chapter:continue' : 'chapter:write'
                 );
-              } catch (_err) {
+              } catch (err: any) {
+                console.error('AI generation failed:', err);
+                toast.error(err.message || 'AI 生成失败');
                 unsubChunk();
                 unsubDone();
                 unsubError();
@@ -223,7 +271,7 @@ export const ChapterEditor: React.FC<Props> = () => {
             {aiGenerating ? 'AI 撰写中...' : 'AI 续写'}
           </button>
           <button
-            style={{ ...btn, backgroundColor: extracting ? '#3c3c3c' : '#0e639c' }}
+            style={{ ...btn, backgroundColor: extracting ? 'var(--bg-hover)' : 'var(--accent-blue-dark)' }}
             disabled={!!extracting || !selectedNodeId}
             onClick={async () => {
               setExtracting(true);
@@ -240,14 +288,31 @@ export const ChapterEditor: React.FC<Props> = () => {
                   useWikiStore.getState().setSuggestions(suggestions);
                   useLayoutStore.getState().openRightPanel();
                 }
-              } catch (e) {
+              } catch (e: any) {
                 console.error('Wiki extraction failed:', e);
+                toast.error(e.message || 'Wiki 提取失败');
               } finally {
                 setExtracting(false);
               }
             }}
           >
             Wiki 提取
+          </button>
+          <button
+            style={{ ...btn, backgroundColor: 'var(--bg-hover)', color: 'var(--text-primary)' }}
+            onClick={async () => {
+              const projectPath = getProjectPath();
+              if (!projectPath || !selectedNodeId) return;
+              try {
+                await bridge.exportChapter(projectPath, selectedNodeId, 'txt');
+              } catch (e: any) {
+                if (e.message !== '用户取消导出') {
+                  toast.error(e.message || '导出失败');
+                }
+              }
+            }}
+          >
+            导出
           </button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 {
   "name": "@astrolabe/core",
-  "version": "0.1.0",
+  "version": "0.8.0",
   "private": true,
   "main": "dist/main/index.js",
   "scripts": {
@@ -15,7 +15,8 @@
   "dependencies": {
     "@astrolabe/shared": "workspace:*",
     "chokidar": "^3.6.0",
-    "electron-store": "8"
+    "electron-store": "8",
+    "electron-updater": "^6.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

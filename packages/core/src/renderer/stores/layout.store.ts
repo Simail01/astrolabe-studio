@@ -7,7 +7,7 @@ interface LayoutState {
   panelLayout: PanelLayout;
   sidebarVisible: boolean;
   rightPanelVisible: boolean;
-  rightPanelMode: 'wiki' | 'fanlib';
+  rightPanelMode: 'wiki' | 'fanlib' | 'promptLog' | 'design';
   bottomPanelVisible: boolean;
   settingsOpen: boolean;
   openTab: (tab: SessionTab) => void;
@@ -16,7 +16,7 @@ interface LayoutState {
   setPanelLayout: (layout: PanelLayout) => void;
   toggleSidebar: () => void;
   toggleRightPanel: () => void;
-  setRightPanelMode: (mode: 'wiki' | 'fanlib') => void;
+  setRightPanelMode: (mode: 'wiki' | 'fanlib' | 'promptLog' | 'design') => void;
   toggleBottomPanel: () => void;
   toggleSettings: () => void;
   openSettings: () => void;

@@ -6,3 +6,6 @@ export * from './fanlib';
 export * from './character-design';
 export * from './pipeline';
 export * from './template';
+export * from './timeline';
+export * from './prompt-log';
+export * from './character-arc';

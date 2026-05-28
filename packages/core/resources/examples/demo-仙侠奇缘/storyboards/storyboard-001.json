@@ -1,0 +1,44 @@
+{
+  "chapterId": "node-1-1",
+  "shots": [
+    {
+      "id": "shot-1",
+      "order": 1,
+      "scene": "清晨，青石山小径，薄雾缭绕",
+      "camera": "wide",
+      "characters": ["林远"],
+      "props": ["竹篓", "草药"],
+      "dialogue": [
+        { "type": "narration", "text": "清晨的雾气还未散尽，林远已经背着竹篓走在青石山的小径上。" }
+      ],
+      "notes": "远景镜头，展示山间清晨的宁静氛围"
+    },
+    {
+      "id": "shot-2",
+      "order": 2,
+      "scene": "北崖凹陷处，断剑插在岩石中",
+      "camera": "medium",
+      "characters": ["林远"],
+      "props": ["仙剑残片", "岩石"],
+      "dialogue": [
+        { "type": "speech", "character": "林远", "text": "这是……" }
+      ],
+      "notes": "中景镜头，林远惊讶地看着发光的断剑"
+    },
+    {
+      "id": "shot-3",
+      "order": 3,
+      "scene": "林远触碰剑柄的瞬间",
+      "camera": "close",
+      "characters": ["林远"],
+      "props": ["仙剑残片"],
+      "dialogue": [
+        { "type": "narration", "text": "一股寒意瞬间从指尖传遍全身。" },
+        { "type": "speech", "character": "青玄", "text": "终于……有人来了。" }
+      ],
+      "notes": "特写镜头，手指触碰剑柄，蓝光闪烁"
+    }
+  ],
+  "createdAt": "2026-05-26T00:00:00.000Z",
+  "updatedAt": "2026-05-26T00:00:00.000Z"
+}

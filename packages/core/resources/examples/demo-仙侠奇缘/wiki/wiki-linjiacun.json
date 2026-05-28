@@ -1,0 +1,18 @@
+{
+  "id": "wiki-linjiacun",
+  "type": "location",
+  "title": "林家村",
+  "aliases": [],
+  "summary": "青石山脚下的小山村，林远的故乡。",
+  "content": "林家村位于青石山脚下，是一个以采药为生的小山村。村中约有百余户人家，民风淳朴。村中长辈对林远多有照顾。",
+  "attributes": {
+    "位置": "青石山脚下",
+    "规模": "百余户"
+  },
+  "relations": [
+    { "targetId": "wiki-linyuan", "relationType": "居民", "description": "林远生长于此" }
+  ],
+  "sourceChapters": ["chapter-001"],
+  "confidence": "confirmed",
+  "confirmedByUser": true
+}

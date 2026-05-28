@@ -96,6 +96,45 @@ const builtInMeta: Record<string, { name: string; description: string; stage: Te
       { key: 'worldSetting', label: '世界观', description: '目标世界观设定' },
     ],
   },
+  'writing/rewrite': {
+    name: '文本改写（内置）',
+    description: '改写段落，保持原意但改善表达',
+    stage: 'writing:rewrite',
+    variables: [{ key: 'content', label: '原文', description: '需要改写的文本' }],
+  },
+  'writing/polish': {
+    name: '文本润色（内置）',
+    description: '润色段落，提升文学品质',
+    stage: 'writing:polish',
+    variables: [{ key: 'content', label: '原文', description: '需要润色的文本' }],
+  },
+  'writing/expand': {
+    name: '文本扩写（内置）',
+    description: '扩写段落，丰富细节描写',
+    stage: 'writing:expand',
+    variables: [{ key: 'content', label: '原文', description: '需要扩写的文本' }],
+  },
+  'writing/compress': {
+    name: '文本精简（内置）',
+    description: '压缩精简段落，保留核心内容',
+    stage: 'writing:compress',
+    variables: [{ key: 'content', label: '原文', description: '需要精简的文本' }],
+  },
+  'writing/enhance': {
+    name: '情感增强（内置）',
+    description: '增强段落的情感表现力',
+    stage: 'writing:enhance',
+    variables: [{ key: 'content', label: '原文', description: '需要增强的文本' }],
+  },
+  'writing/style': {
+    name: '风格转换（内置）',
+    description: '将段落转换为目标风格',
+    stage: 'writing:style',
+    variables: [
+      { key: 'content', label: '原文', description: '需要转换的文本' },
+      { key: 'targetStyle', label: '目标风格', description: '如：古风、现代、幽默、严肃' },
+    ],
+  },
 };
 
 // Map stage to built-in file path
@@ -110,6 +149,12 @@ const stageToFile: Record<TemplateStage, string> = {
   'wiki:relations': 'wiki/relations',
   'character:create': 'character/create',
   'fanlib:adapt': 'fanlib/adapt',
+  'writing:rewrite': 'writing/rewrite',
+  'writing:polish': 'writing/polish',
+  'writing:expand': 'writing/expand',
+  'writing:compress': 'writing/compress',
+  'writing:enhance': 'writing/enhance',
+  'writing:style': 'writing/style',
 };
 
 function getBuiltInTemplatesDir(): string {

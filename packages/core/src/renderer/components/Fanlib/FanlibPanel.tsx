@@ -3,25 +3,25 @@ import { useFanlibStore } from '../../stores/fanlib.store';
 import { CreateCardDialog } from './CreateCardDialog';
 
 const panel: React.CSSProperties = {
-  display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#1e1e1e',
+  display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: 'var(--editor-bg)',
 };
 const typeBar: React.CSSProperties = {
-  display: 'flex', borderBottom: '1px solid #3c3c3c',
+  display: 'flex', borderBottom: '1px solid var(--border-default)',
 };
 const typeTab: React.CSSProperties = {
-  padding: '6px 12px', fontSize: 12, cursor: 'pointer', color: '#999', borderRight: '1px solid #3c3c3c',
+  padding: '6px 12px', fontSize: 12, cursor: 'pointer', color: 'var(--text-secondary)', borderRight: '1px solid var(--border-default)',
 };
-const typeTabActive: React.CSSProperties = { ...typeTab, color: '#fff', backgroundColor: '#252526' };
+const typeTabActive: React.CSSProperties = { ...typeTab, color: 'var(--text-inverse)', backgroundColor: 'var(--editor-panel)' };
 const searchInput: React.CSSProperties = {
-  width: '100%', padding: '4px 8px', fontSize: 13, backgroundColor: '#3c3c3c', border: 'none', borderBottom: '1px solid #555', color: '#fff', outline: 'none',
+  width: '100%', padding: '4px 8px', fontSize: 13, backgroundColor: 'var(--bg-hover)', border: 'none', borderBottom: '1px solid var(--border-input)', color: 'var(--text-inverse)', outline: 'none',
 };
 const list: React.CSSProperties = { flex: 1, overflow: 'auto' };
 const listItem: React.CSSProperties = {
-  padding: '8px 12px', cursor: 'pointer', fontSize: 13, borderBottom: '1px solid #2d2d2d', color: '#ccc', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+  padding: '8px 12px', cursor: 'pointer', fontSize: 13, borderBottom: '1px solid var(--bg-panel)', color: 'var(--text-primary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
 };
-const listItemActive: React.CSSProperties = { ...listItem, backgroundColor: '#094771', color: '#fff' };
+const listItemActive: React.CSSProperties = { ...listItem, backgroundColor: 'var(--accent-blue-dim)', color: 'var(--text-inverse)' };
 const importBtn: React.CSSProperties = {
-  padding: '2px 8px', fontSize: 11, backgroundColor: '#007acc', color: '#fff', border: 'none', borderRadius: 3, cursor: 'pointer',
+  padding: '2px 8px', fontSize: 11, backgroundColor: 'var(--accent-blue)', color: 'var(--text-inverse)', border: 'none', borderRadius: 3, cursor: 'pointer',
 };
 
 const typeLabels: Record<string, string> = { character: '人物', worldview: '世界观', item: '物品', faction: '势力' };
@@ -49,7 +49,7 @@ export const FanlibPanel: React.FC = () => {
         {displayCards.map((card) => (
           <div key={card.id} style={card.id === selectedCardId ? listItemActive : listItem} onClick={() => selectCard(card.id)}>
             <div>
-              <span style={{ marginRight: 6, color: '#888', fontSize: 11 }}>[{typeLabels[card.type] ?? card.type}]</span>
+              <span style={{ marginRight: 6, color: 'var(--text-tertiary)', fontSize: 11 }}>[{typeLabels[card.type] ?? card.type}]</span>
               {card.name}
             </div>
             <button style={importBtn} onClick={(e) => { e.stopPropagation(); openImportDialog(card.id); }}>引入</button>

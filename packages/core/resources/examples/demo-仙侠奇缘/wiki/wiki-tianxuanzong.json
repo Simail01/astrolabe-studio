@@ -1,0 +1,18 @@
+{
+  "id": "wiki-tianxuanzong",
+  "type": "faction",
+  "title": "天璇宗",
+  "aliases": [],
+  "summary": "修仙界大宗门，青玄曾为该宗长老。",
+  "content": "天璇宗是修仙界赫赫有名的大宗门，以剑修闻名。宗内分为内门和外门，弟子众多。千年前青玄长老为宗门顶梁柱，其陨落后宗门实力大减。",
+  "attributes": {
+    "类型": "修仙宗门",
+    "特长": "剑修"
+  },
+  "relations": [
+    { "targetId": "wiki-qingxuan", "relationType": "成员", "description": "青玄曾任长老" }
+  ],
+  "sourceChapters": ["chapter-002"],
+  "confidence": "confirmed",
+  "confirmedByUser": true
+}

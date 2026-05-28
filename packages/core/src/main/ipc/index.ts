@@ -12,8 +12,14 @@ import { registerTemplateHandlers } from './template';
 import { registerDialogHandlers } from './dialog';
 import { registerWorkspaceHandlers } from './workspace';
 import { registerImageHandlers } from './image';
+import { registerShellHandlers } from './shell';
+import { registerTimelineHandlers } from './timeline';
+import { registerArcHandlers } from './arc';
+import { registerPromptLogHandlers } from './prompt-log';
+import { registerAIQueueHandlers } from '../services/ai-queue.service';
 
 export function registerAllHandlers(): void {
+  registerAIQueueHandlers();
   registerFileHandlers();
   registerProjectHandlers();
   registerSessionHandlers();
@@ -28,4 +34,8 @@ export function registerAllHandlers(): void {
   registerDialogHandlers();
   registerWorkspaceHandlers();
   registerImageHandlers();
+  registerShellHandlers();
+  registerTimelineHandlers();
+  registerArcHandlers();
+  registerPromptLogHandlers();
 }

@@ -11,6 +11,7 @@ interface OutlineState {
   updateNode: (nodeId: string, updates: Partial<OutlineNode>) => void;
   addChildNode: (parentId: string, node: OutlineNode) => void;
   removeNode: (nodeId: string) => void;
+  moveNode: (nodeId: string, targetParentId: string | null, targetIndex: number) => void;
 }
 
 let nextId = 1;
@@ -73,5 +74,45 @@ export const useOutlineStore = create<OutlineState>((set) => ({
         outline: { ...state.outline, nodes: remove([...state.outline.nodes]) },
         selectedNodeId: state.selectedNodeId === nodeId ? null : state.selectedNodeId,
       };
+    }),
+
+  moveNode: (nodeId, targetParentId, targetIndex) =>
+    set((state) => {
+      if (!state.outline) return state;
+
+      let moved: OutlineNode | null = null;
+      const remove = (list: OutlineNode[]): OutlineNode[] =>
+        list
+          .filter((n) => {
+            if (n.id === nodeId) { moved = n; return false; }
+            return true;
+          })
+          .map((n) => ({ ...n, children: remove(n.children) }));
+
+      const nodes = remove([...state.outline.nodes]);
+      if (!moved) return state;
+
+      const isDescendant = (parent: OutlineNode, childId: string): boolean =>
+        parent.children.some((c) => c.id === childId || isDescendant(c, childId));
+      if (targetParentId && isDescendant(moved, targetParentId)) return state;
+
+      if (targetParentId === null) {
+        const idx = Math.min(targetIndex, nodes.length);
+        nodes.splice(idx, 0, moved);
+        return { outline: { ...state.outline, nodes, updatedAt: new Date().toISOString() } };
+      }
+
+      const insert = (list: OutlineNode[]): boolean => {
+        for (const n of list) {
+          if (n.id === targetParentId) {
+            n.children.splice(Math.min(targetIndex, n.children.length), 0, moved!);
+            return true;
+          }
+          if (insert(n.children)) return true;
+        }
+        return false;
+      };
+      insert(nodes);
+      return { outline: { ...state.outline, nodes, updatedAt: new Date().toISOString() } };
     }),
 }));

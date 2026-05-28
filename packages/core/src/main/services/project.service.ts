@@ -38,4 +38,8 @@ export const projectService = {
 
     return config;
   },
+
+  deleteProject(projectPath: string): void {
+    fs.rmSync(projectPath, { recursive: true, force: true });
+  },
 };

@@ -14,12 +14,15 @@ export interface ProjectSettings {
   autoSaveInterval: number;
 }
 
+export type ChapterStatus = 'draft' | 'writing' | 'revision' | 'final';
+
 export interface Chapter {
   id: string;
   title: string;
   content: string;
   wordCount: number;
   order: number;
+  status: ChapterStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -53,6 +56,6 @@ export interface OutlineNode {
   children: OutlineNode[];
 }
 
-export type ExportFormat = 'epub' | 'pdf' | 'txt';
+export type ExportFormat = 'epub' | 'pdf' | 'txt' | 'markdown';
 export type ComicExportFormat = 'png' | 'pdf' | 'video';
 export type CardExportFormat = 'json' | 'markdown' | 'image';

@@ -6,12 +6,47 @@ export interface SuggestionItem extends WikiSuggestion {
   status: 'pending' | 'confirmed' | 'rejected';
 }
 
+export interface EnrichResult {
+  field: string;
+  currentValue: string;
+  newValue: string;
+  action: 'append' | 'overwrite' | 'add';
+  evidence: string;
+  sourceChapter: string;
+}
+
+export interface ConsistencyResult {
+  entryTitle: string;
+  field: string;
+  chapterA: string;
+  valueA: string;
+  chapterB: string;
+  valueB: string;
+  severity: 'critical' | 'warning' | 'info';
+  suggestion: string;
+}
+
+export interface RelationResult {
+  sourceTitle: string;
+  targetTitle: string;
+  relationType: string;
+  confidence: number;
+  evidence: string;
+  sourceChapter: string;
+}
+
 interface WikiState {
   entries: WikiEntry[];
   selectedEntryId: string | null;
   searchQuery: string;
   filteredEntries: WikiEntry[];
   suggestions: SuggestionItem[];
+  enrichResults: EnrichResult[];
+  consistencyResults: ConsistencyResult[];
+  relationResults: RelationResult[];
+  enrichLoading: boolean;
+  consistencyLoading: boolean;
+  relationsLoading: boolean;
   setEntries: (entries: WikiEntry[]) => void;
   addOrUpdateEntry: (entry: WikiEntry) => void;
   removeEntry: (id: string) => void;
@@ -21,6 +56,15 @@ interface WikiState {
   confirmSuggestion: (index: number) => void;
   rejectSuggestion: (index: number) => void;
   clearSuggestions: () => void;
+  setEnrichResults: (results: EnrichResult[]) => void;
+  setConsistencyResults: (results: ConsistencyResult[]) => void;
+  setRelationResults: (results: RelationResult[]) => void;
+  setEnrichLoading: (loading: boolean) => void;
+  setConsistencyLoading: (loading: boolean) => void;
+  setRelationsLoading: (loading: boolean) => void;
+  clearEnrichResults: () => void;
+  clearConsistencyResults: () => void;
+  clearRelationResults: () => void;
 }
 
 export const useWikiStore = create<WikiState>((set) => ({
@@ -29,6 +73,12 @@ export const useWikiStore = create<WikiState>((set) => ({
   searchQuery: '',
   filteredEntries: [],
   suggestions: [],
+  enrichResults: [],
+  consistencyResults: [],
+  relationResults: [],
+  enrichLoading: false,
+  consistencyLoading: false,
+  relationsLoading: false,
 
   setEntries: (entries) => set({ entries, filteredEntries: entries }),
 
@@ -64,7 +114,7 @@ export const useWikiStore = create<WikiState>((set) => ({
                 e.title.toLowerCase().includes(q) ||
                 e.aliases.some((a) => a.toLowerCase().includes(q)) ||
                 e.summary.toLowerCase().includes(q)
-            )
+            ).slice(0, 200)
           : state.entries,
       };
     }),
@@ -87,4 +137,14 @@ export const useWikiStore = create<WikiState>((set) => ({
     }),
 
   clearSuggestions: () => set({ suggestions: [] }),
+
+  setEnrichResults: (results) => set({ enrichResults: results }),
+  setConsistencyResults: (results) => set({ consistencyResults: results }),
+  setRelationResults: (results) => set({ relationResults: results }),
+  setEnrichLoading: (loading) => set({ enrichLoading: loading }),
+  setConsistencyLoading: (loading) => set({ consistencyLoading: loading }),
+  setRelationsLoading: (loading) => set({ relationsLoading: loading }),
+  clearEnrichResults: () => set({ enrichResults: [] }),
+  clearConsistencyResults: () => set({ consistencyResults: [] }),
+  clearRelationResults: () => set({ relationResults: [] }),
 }));

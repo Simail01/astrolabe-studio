@@ -1,4 +1,4 @@
-import type { AstrolabeConfig, WorkspaceSession, RecoveryDraft } from '@astrolabe/shared';
+import type { AstrolabeConfig, WorkspaceSession, RecoveryDraft, PromptLogEntry } from '@astrolabe/shared';
 
 const api = window.astrolabe;
 
@@ -14,6 +14,7 @@ export const bridge = {
   // Project
   readProject: (path: string) => api.invoke('project:read', path) as Promise<AstrolabeConfig>,
   createProject: (path: string, name: string) => api.invoke('project:create', path, name) as Promise<AstrolabeConfig>,
+  deleteProject: (path: string) => api.invoke('project:delete', path) as Promise<void>,
 
   // Session
   saveSession: (session: WorkspaceSession) => api.invoke('session:save', session) as Promise<void>,
@@ -22,13 +23,19 @@ export const bridge = {
 
   // Export
   exportNovel: (projectPath: string, format: string) => api.invoke('export:novel', projectPath, format) as Promise<string>,
+  exportChapter: (projectPath: string, chapterId: string, format: string) => api.invoke('export:chapter', projectPath, chapterId, format) as Promise<string>,
   exportCard: (cardPath: string, format: string) => api.invoke('export:card', cardPath, format) as Promise<string>,
   exportComic: (projectPath: string, format: string) => api.invoke('export:comic', projectPath, format) as Promise<string>,
+  exportComicLongImage: (projectPath: string, html: string) => api.invoke('export:comic:longImage', projectPath, html) as Promise<string>,
 
   // Dialog & Workspace
   selectFolder: () => api.invoke('dialog:selectFolder') as Promise<string | null>,
   openWorkspace: (folderPath: string) => api.invoke('workspace:open', folderPath) as Promise<unknown>,
   getLastWorkspace: () => api.invoke('workspace:getLast') as Promise<string | null>,
+  seedExample: (workspacePath: string) => api.invoke('workspace:seedExample', workspacePath) as Promise<string | null>,
+
+  // Shell
+  invoke: (channel: string, ...args: unknown[]) => api.invoke(channel, ...args),
 
   // Event listeners
   onFileChanged: (callback: (path: string) => void) => api.on('fs:fileChanged', callback as (...args: unknown[]) => void),
@@ -37,9 +44,9 @@ export const bridge = {
   downloadImage: (url: string, destPath: string) => api.invoke('image:download', url, destPath) as Promise<string>,
 
   // AI
-  generateText: (prompt: string, systemPrompt?: string) => api.invoke('ai:text:generate', prompt, systemPrompt) as Promise<string>,
-  generateTextStream: (prompt: string, systemPrompt?: string) => api.invoke('ai:text:stream', prompt, systemPrompt) as Promise<{ started: boolean }>,
-  generateImage: (options: { prompt: string; model: string; size?: string; seed?: number; referenceImage?: string }) => api.invoke('ai:image:generate', options) as Promise<string[]>,
+  generateText: (prompt: string, systemPrompt?: string, workspacePath?: string, stage?: string) => api.invoke('ai:text:generate', prompt, systemPrompt, workspacePath, stage) as Promise<string>,
+  generateTextStream: (prompt: string, systemPrompt?: string, workspacePath?: string, stage?: string) => api.invoke('ai:text:stream', prompt, systemPrompt, workspacePath, stage) as Promise<{ started: boolean }>,
+  generateImage: (options: { prompt: string; model: string; size?: string; seed?: number; referenceImage?: string; workspacePath?: string; stage?: string }) => api.invoke('ai:image:generate', options) as Promise<string[]>,
   pingVolcEngine: (apiKey?: string) => api.invoke('ai:volc:ping', apiKey) as Promise<{ ok: boolean; error?: string }>,
   onAIChunk: (callback: (text: string) => void) => api.on('ai:text:chunk', callback as (...args: unknown[]) => void),
   onAIDone: (callback: (fullText: string) => void) => api.on('ai:text:done', callback as (...args: unknown[]) => void),
@@ -94,4 +101,29 @@ export const bridge = {
   templateSave: (workspacePath: string, template: unknown) => api.invoke('template:save', workspacePath, template) as Promise<void>,
   templateDelete: (workspacePath: string, templateId: string) => api.invoke('template:delete', workspacePath, templateId) as Promise<void>,
   templateCreateFromBuiltIn: (workspacePath: string, builtInId: string, name: string, content: string) => api.invoke('template:createFromBuiltIn', workspacePath, builtInId, name, content) as Promise<unknown>,
+
+  // Timeline
+  timelineGet: (projectPath: string) => api.invoke('timeline:get', projectPath) as Promise<unknown>,
+  timelineSave: (projectPath: string, data: unknown) => api.invoke('timeline:save', projectPath, data) as Promise<void>,
+  timelineExtract: (projectPath: string, chapterId: string, chapterContent: string, chapterTitle: string) => api.invoke('timeline:extract', projectPath, chapterId, chapterContent, chapterTitle) as Promise<unknown[]>,
+
+  // Character Arc
+  arcGet: (projectPath: string, entryId: string) => api.invoke('arc:get', projectPath, entryId) as Promise<unknown>,
+  arcSave: (projectPath: string, arc: unknown) => api.invoke('arc:save', projectPath, arc) as Promise<void>,
+  arcAddState: (projectPath: string, entryId: string, state: unknown) => api.invoke('arc:addState', projectPath, entryId, state) as Promise<unknown>,
+  arcSummarize: (projectPath: string, entryId: string, entryTitle: string) => api.invoke('arc:summarize', projectPath, entryId, entryTitle) as Promise<string>,
+
+  // Prompt Log
+  listPromptLogs: (workspacePath: string, limit?: number) => api.invoke('prompt-log:list', workspacePath, limit) as Promise<PromptLogEntry[]>,
+
+  // Update
+  checkUpdate: () => api.invoke('update:check') as Promise<{ hasUpdate?: boolean; error?: string }>,
+  downloadUpdate: () => api.invoke('update:download') as Promise<{ ok?: boolean; error?: string }>,
+  installUpdate: () => api.invoke('update:install') as Promise<void>,
+  getUpdateStatus: () => api.invoke('update:status') as Promise<{ updateAvailable: boolean; updateDownloaded: boolean; version: string }>,
+
+  // AI Queue & Cache
+  cancelAIRequest: (requestId: string) => api.invoke('ai:cancel', requestId) as Promise<boolean>,
+  cancelAllAIRequests: () => api.invoke('ai:cancelAll') as Promise<void>,
+  clearAICache: () => api.invoke('ai:clearCache') as Promise<void>,
 };

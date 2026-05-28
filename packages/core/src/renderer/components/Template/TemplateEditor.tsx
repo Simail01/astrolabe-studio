@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTemplateStore } from '../../stores/template.store';
 import { useWorkspaceStore } from '../../stores/workspace.store';
+import { toast } from '../../stores/toast.store';
 import { TEMPLATE_STAGE_LABELS, type TemplateStage } from '@astrolabe/shared';
 
 export const TemplateEditor: React.FC = () => {
@@ -52,7 +53,7 @@ export const TemplateEditor: React.FC = () => {
           };
       await saveTemplate(workspace.path, template);
       closeEditor();
-    } catch (e) { alert('保存失败: ' + (e as Error).message); }
+    } catch (e) { toast.error('保存失败: ' + (e as Error).message); }
     finally { setSaving(false); }
   };
 
@@ -62,7 +63,7 @@ export const TemplateEditor: React.FC = () => {
     try {
       await deleteTemplate(workspace.path, editingTemplate.id);
       closeEditor();
-    } catch (e) { alert('删除失败: ' + (e as Error).message); }
+    } catch (e) { toast.error('删除失败: ' + (e as Error).message); }
   };
 
   return (

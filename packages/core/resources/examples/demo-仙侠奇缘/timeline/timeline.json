@@ -1,0 +1,40 @@
+{
+  "events": [
+    {
+      "id": "evt-1",
+      "chapterId": "node-1-1",
+      "title": "发现仙剑残片",
+      "description": "林远在北崖发现一柄残破仙剑，剑魂青玄苏醒。",
+      "type": "plot",
+      "relatedEntries": ["wiki-linyuan", "wiki-xianjian", "wiki-qingshishan"],
+      "timestamp": "2026-05-26T00:00:00.000Z"
+    },
+    {
+      "id": "evt-2",
+      "chapterId": "node-1-1",
+      "title": "青玄苏醒",
+      "description": "仙剑中的残魂青玄首次与林远对话。",
+      "type": "character",
+      "relatedEntries": ["wiki-qingxuan", "wiki-xianjian"],
+      "timestamp": "2026-05-26T00:01:00.000Z"
+    },
+    {
+      "id": "evt-3",
+      "chapterId": "node-1-3",
+      "title": "黑风谷妖兽袭击",
+      "description": "黑风狼袭击林家村，林远以仙剑之力击退妖兽。",
+      "type": "plot",
+      "relatedEntries": ["wiki-linyuan", "wiki-heifenggu", "wiki-linjiacun"],
+      "timestamp": "2026-05-26T00:02:00.000Z"
+    },
+    {
+      "id": "evt-4",
+      "chapterId": "node-1-3",
+      "title": "林远决定离村",
+      "description": "击退妖兽后，林远决定离开林家村寻找修仙之路。",
+      "type": "character",
+      "relatedEntries": ["wiki-linyuan", "wiki-linjiacun"],
+      "timestamp": "2026-05-26T00:03:00.000Z"
+    }
+  ]
+}

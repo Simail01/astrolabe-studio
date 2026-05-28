@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Chapter } from '@astrolabe/shared';
+import type { Chapter, ChapterStatus } from '@astrolabe/shared';
 
 interface ChapterState {
   currentChapter: Chapter | null;
@@ -9,6 +9,7 @@ interface ChapterState {
   isSaving: boolean;
   setChapter: (chapter: Chapter | null) => void;
   setContent: (content: string) => void;
+  updateStatus: (status: ChapterStatus) => void;
   markClean: () => void;
 }
 
@@ -38,6 +39,13 @@ export const useChapterStore = create<ChapterState>((set) => ({
     wordCount: countWords(content),
     isDirty: true,
   }),
+
+  updateStatus: (status) => set((state) => ({
+    currentChapter: state.currentChapter
+      ? { ...state.currentChapter, status, updatedAt: new Date().toISOString() }
+      : null,
+    isDirty: true,
+  })),
 
   markClean: () => set({ isDirty: false }),
 }));

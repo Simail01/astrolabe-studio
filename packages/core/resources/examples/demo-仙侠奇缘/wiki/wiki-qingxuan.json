@@ -1,0 +1,19 @@
+{
+  "id": "wiki-qingxuan",
+  "type": "person",
+  "title": "青玄",
+  "aliases": ["青玄长老"],
+  "summary": "千年前天璇宗剑修长老，残魂封印于仙剑之中。",
+  "content": "青玄原为天璇宗剑修长老，修为通天。因与魔修大战，肉身陨落，残魂封印于仙剑残片中沉睡千年。苏醒后指导林远修仙。",
+  "attributes": {
+    "身份": "天璇宗长老（残魂）",
+    "修为": "剑修大成"
+  },
+  "relations": [
+    { "targetId": "wiki-linyuan", "relationType": "师徒", "description": "收林远为弟子" },
+    { "targetId": "wiki-tianxuanzong", "relationType": "所属", "description": "原天璇宗长老" }
+  ],
+  "sourceChapters": ["chapter-002"],
+  "confidence": "confirmed",
+  "confirmedByUser": true
+}

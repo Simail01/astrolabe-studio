@@ -1,10 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useWorkspaceStore } from '../../stores/workspace.store';
 import { useOutlineStore } from '../../stores/outline.store';
 import { useTemplateStore } from '../../stores/template.store';
 import { TemplateSelector } from '../Template/TemplateSelector';
 import { bridge } from '../../services/bridge';
 import type { Shot } from '@astrolabe/shared';
+import { toast } from '../../stores/toast.store';
+import { buildShotPrompt, findReferenceImage } from '../../utils/comic-prompt';
+import { EmptyState } from '../ui/EmptyState';
+import { Icon } from '../ui/Icon';
 
 const framingLabels: Record<string, string> = {
   'extreme-long': '远景', 'long': '全景', 'medium': '中景', 'close-up': '特写', 'extreme-close-up': '大特写',
@@ -24,6 +28,8 @@ export const StoryboardViewer: React.FC = () => {
   const [error, setError] = useState('');
   const [genProgress, setGenProgress] = useState('');
   const [resolvedImageUrl, setResolvedImageUrl] = useState<string | null>(null);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dropIdx, setDropIdx] = useState<number | null>(null);
 
   // Load existing storyboard
   useEffect(() => {
@@ -31,7 +37,7 @@ export const StoryboardViewer: React.FC = () => {
     setError('');
     bridge.pipelineGetStoryboard(projectPath, selectedNodeId).then((data: any) => {
       if (data?.shots) { setShots(data.shots); setSelectedShotIdx(0); }
-    }).catch(() => {});
+    }).catch(e => toast.error(e.message || '操作失败'));
   }, [projectPath, selectedNodeId]);
 
   // Resolve local image paths to data URLs for display
@@ -41,6 +47,117 @@ export const StoryboardViewer: React.FC = () => {
     if (s.notes.startsWith('http')) { setResolvedImageUrl(s.notes); return; }
     bridge.readFileBase64(s.notes).then(setResolvedImageUrl).catch(() => setResolvedImageUrl(null));
   }, [shots, selectedShotIdx]);
+
+  /** Persist current shots to disk */
+  const saveStoryboard = useCallback(async (updatedShots: Shot[]) => {
+    if (!projectPath || !selectedNodeId) return;
+    try {
+      await bridge.pipelineSaveStoryboard(projectPath, {
+        id: `sb-${selectedNodeId}`,
+        chapterId: selectedNodeId,
+        shots: updatedShots,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (e) {
+      toast.error('自动保存失败: ' + ((e as Error).message || '未知错误'));
+    }
+  }, [projectPath, selectedNodeId]);
+
+  /** Add a new manual shot with default values */
+  const handleAddShot = useCallback(() => {
+    const newShot: Shot = {
+      id: crypto.randomUUID(),
+      order: shots.length,
+      scene: '',
+      framing: 'medium',
+      angle: 'eye-level',
+      characters: [],
+      dialogue: [],
+      props: [],
+      mood: '',
+      notes: '',
+    };
+    const updated = [...shots, newShot];
+    setShots(updated);
+    setSelectedShotIdx(updated.length - 1);
+    saveStoryboard(updated);
+  }, [shots, saveStoryboard]);
+
+  /** Delete a shot by index */
+  const handleDeleteShot = useCallback((idx: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (shots.length <= 1) { toast.error('至少保留一个镜头'); return; }
+    const updated = shots.filter((_, i) => i !== idx).map((s, i) => ({ ...s, order: i }));
+    setShots(updated);
+    if (selectedShotIdx >= updated.length) setSelectedShotIdx(updated.length - 1);
+    else if (selectedShotIdx > idx) setSelectedShotIdx(selectedShotIdx - 1);
+    else if (selectedShotIdx === idx) setSelectedShotIdx(Math.min(idx, updated.length - 1));
+    saveStoryboard(updated);
+  }, [shots, selectedShotIdx, saveStoryboard]);
+
+  /** Merge current shot with the next shot */
+  const handleMergeShot = useCallback((idx: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (idx >= shots.length - 1) { toast.error('已是最后一个镜头，无法合并'); return; }
+    const current = shots[idx];
+    const next = shots[idx + 1];
+    // Deduplicate characters by characterId
+    const charMap = new Map<string, any>();
+    for (const c of [...(current.characters || []), ...(next.characters || [])]) {
+      charMap.set(c.characterId, c);
+    }
+    const merged: Shot = {
+      ...current,
+      scene: [current.scene, next.scene].filter(Boolean).join(' | '),
+      characters: Array.from(charMap.values()),
+      dialogue: [...(current.dialogue || []), ...(next.dialogue || [])],
+      props: [...new Set([...(current.props || []), ...(next.props || [])])],
+      mood: [current.mood, next.mood].filter(Boolean).join('；'),
+    };
+    const updated = shots
+      .filter((_, i) => i !== idx + 1)
+      .map((s, i) => (s.id === current.id ? { ...merged, order: i } : { ...s, order: i }));
+    setShots(updated);
+    if (selectedShotIdx > idx) setSelectedShotIdx(selectedShotIdx - 1);
+    saveStoryboard(updated);
+  }, [shots, selectedShotIdx, saveStoryboard]);
+
+  // --- Drag-and-drop handlers ---
+  const handleDragStart = useCallback((idx: number, e: React.DragEvent) => {
+    setDragIdx(idx);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(idx));
+  }, []);
+
+  const handleDragOver = useCallback((idx: number, e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDropIdx(idx);
+  }, []);
+
+  const handleDrop = useCallback((targetIdx: number, e: React.DragEvent) => {
+    e.preventDefault();
+    const srcIdx = dragIdx;
+    setDragIdx(null);
+    setDropIdx(null);
+    if (srcIdx === null || srcIdx === targetIdx) return;
+    const updated = [...shots];
+    const [moved] = updated.splice(srcIdx, 1);
+    updated.splice(targetIdx, 0, moved);
+    const reordered = updated.map((s, i) => ({ ...s, order: i }));
+    setShots(reordered);
+    // Adjust selected index
+    if (selectedShotIdx === srcIdx) setSelectedShotIdx(targetIdx);
+    else if (srcIdx < selectedShotIdx && targetIdx >= selectedShotIdx) setSelectedShotIdx(selectedShotIdx - 1);
+    else if (srcIdx > selectedShotIdx && targetIdx <= selectedShotIdx) setSelectedShotIdx(selectedShotIdx + 1);
+    saveStoryboard(reordered);
+  }, [dragIdx, shots, selectedShotIdx, saveStoryboard]);
+
+  const handleDragEnd = useCallback(() => {
+    setDragIdx(null);
+    setDropIdx(null);
+  }, []);
 
   const handleDecompose = async () => {
     if (!projectPath || !selectedNodeId) return;
@@ -81,9 +198,9 @@ export const StoryboardViewer: React.FC = () => {
         const shot = updatedShots[i];
         setGenProgress(`生成中: 镜头 ${i + 1}/${updatedShots.length}`);
         try {
-          const charDesc = (shot.characters || []).map((c: any) => `${c.characterId}(${c.expression || ''} ${c.pose || ''})`).join(',');
-          const prompt = `漫画风格，${shot.framing}，${shot.angle}。场景：${shot.scene || ''}。${charDesc}。氛围：${shot.mood || ''}。道具：${(shot.props || []).join('，')}`;
-          const urls = await bridge.generateImage({ model, prompt, size: '2K' }) as string[];
+          const prompt = buildShotPrompt(shot);
+          const referenceImage = await findReferenceImage(projectPath, shot.characters);
+          const urls = await bridge.generateImage({ model, prompt, size: '2K', referenceImage, workspacePath: projectPath ?? undefined, stage: 'storyboard:generate' }) as string[];
           if (urls?.length) {
             let localUrl = urls[0];
             try {
@@ -93,7 +210,7 @@ export const StoryboardViewer: React.FC = () => {
             } catch { /* fall back to remote URL */ }
             updatedShots[i] = { ...shot, notes: localUrl };
           }
-        } catch (e) { console.error(`Shot ${i + 1} failed:`, e); }
+        } catch (e) { toast.error(`镜头 ${i + 1} 生成失败: ${(e as Error).message || '未知错误'}`); }
       }
       setShots(updatedShots);
       await bridge.pipelineSaveStoryboard(projectPath, {
@@ -113,10 +230,11 @@ export const StoryboardViewer: React.FC = () => {
 
   if (!projectPath || !selectedNodeId) {
     return (
-      <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', backgroundColor: 'var(--bg-base)', gap: 12, flexDirection: 'column' }}>
-        <div style={{ fontSize: 48, opacity: 0.3 }}>🎬</div>
-        <div style={{ fontSize: 16 }}>{!projectPath ? '请先打开工作区并选择作品' : '请在大纲中选择一个章节节点'}</div>
-      </div>
+      <EmptyState
+        variant="page"
+        icon={<Icon name="movie" size={48} color="var(--text-muted)" />}
+        title={!projectPath ? '请先打开工作区并选择作品' : '请在大纲中选择一个章节节点'}
+      />
     );
   }
 
@@ -126,10 +244,17 @@ export const StoryboardViewer: React.FC = () => {
       <div style={{ width: 260, overflow: 'auto', borderRight: '1px solid var(--border-subtle)' }}>
         <div style={{ padding: '8px 12px', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>分镜 ({shots.length})</span>
+          <button onClick={handleAddShot} title="新建镜头"
+            style={{ background: 'none', border: '1px solid var(--accent)', color: 'var(--accent)', borderRadius: 3, cursor: 'pointer', fontSize: 11, padding: '1px 8px', lineHeight: '18px' }}>
+            + 新建镜头
+          </button>
         </div>
         {!shots.length ? (
           <div style={{ padding: 16, textAlign: 'center' }}>
-            <div style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 12 }}>暂无分镜数据</div>
+            <EmptyState
+              variant="inline"
+              title="暂无分镜数据"
+            />
             <div style={{ marginBottom: 8 }}>
               <TemplateSelector stage="storyboard:decompose" />
             </div>
@@ -140,22 +265,48 @@ export const StoryboardViewer: React.FC = () => {
             {loading && <div style={{ marginTop: 12, fontSize: 12, color: 'var(--text-muted)' }}>正在调用 AI 分析章节内容...</div>}
           </div>
         ) : (
-          shots.map((s, i) => (
-            <div key={s.id || i}
-              onClick={() => setSelectedShotIdx(i)}
-              style={{
-                padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid var(--border-subtle)', fontSize: 13,
-                backgroundColor: i === selectedShotIdx ? 'var(--accent-dim)' : 'transparent',
-              }}>
-              <div style={{ color: 'var(--accent)', fontSize: 11, marginBottom: 2 }}>镜头 {i + 1}</div>
-              <div style={{ fontSize: 12 }}>{(s.scene || '').slice(0, 30) || '（无场景）'}</div>
-              <div style={{ marginTop: 4 }}>
-                <span style={{ display: 'inline-block', padding: '2px 6px', fontSize: 10, backgroundColor: 'var(--accent)', color: 'var(--text-inverse)', borderRadius: 3, marginRight: 4 }}>{framingLabels[s.framing] || s.framing}</span>
-                <span style={{ display: 'inline-block', padding: '2px 6px', fontSize: 10, backgroundColor: 'var(--accent-dim)', color: 'var(--accent)', borderRadius: 3, marginRight: 4 }}>{angleLabels[s.angle] || s.angle}</span>
+          shots.map((s, i) => {
+            const isDragging = dragIdx === i;
+            const isDropTarget = dropIdx === i && dragIdx !== null && dragIdx !== i;
+            return (
+              <div key={s.id || i}
+                onClick={() => setSelectedShotIdx(i)}
+                draggable
+                onDragStart={(e) => handleDragStart(i, e)}
+                onDragOver={(e) => handleDragOver(i, e)}
+                onDrop={(e) => handleDrop(i, e)}
+                onDragEnd={handleDragEnd}
+                style={{
+                  padding: '8px 12px', cursor: 'grab', borderBottom: '1px solid var(--border-subtle)', fontSize: 13,
+                  backgroundColor: i === selectedShotIdx ? 'var(--accent-dim)' : 'transparent',
+                  opacity: isDragging ? 0.4 : 1,
+                  borderTop: isDropTarget ? '2px solid var(--accent)' : undefined,
+                  position: 'relative',
+                }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                  <span style={{ color: 'var(--accent)', fontSize: 11 }}>镜头 {i + 1}</span>
+                  <span style={{ display: 'flex', gap: 6 }}>
+                    {i < shots.length - 1 && (
+                      <button onClick={(e) => handleMergeShot(i, e)} title="与下一镜头合并"
+                        style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 10, padding: '0 3px', lineHeight: 1 }}>
+                        合并
+                      </button>
+                    )}
+                    <button onClick={(e) => handleDeleteShot(i, e)} title="删除镜头"
+                      style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 12, padding: '0 2px', lineHeight: 1 }}>
+                      ✕
+                    </button>
+                  </span>
+                </div>
+                <div style={{ fontSize: 12 }}>{(s.scene || '').slice(0, 30) || '（无场景）'}</div>
+                <div style={{ marginTop: 4 }}>
+                  <span style={{ display: 'inline-block', padding: '2px 6px', fontSize: 10, backgroundColor: 'var(--accent)', color: 'var(--text-inverse)', borderRadius: 3, marginRight: 4 }}>{framingLabels[s.framing] || s.framing}</span>
+                  <span style={{ display: 'inline-block', padding: '2px 6px', fontSize: 10, backgroundColor: 'var(--accent-dim)', color: 'var(--accent)', borderRadius: 3, marginRight: 4 }}>{angleLabels[s.angle] || s.angle}</span>
+                </div>
+                {s.notes && s.notes.startsWith('http') && <div style={{ fontSize: 10, color: 'var(--color-success)', marginTop: 2 }}>已生成图片</div>}
               </div>
-              {s.notes && s.notes.startsWith('http') && <div style={{ fontSize: 10, color: 'var(--color-success)', marginTop: 2 }}>已生成图片</div>}
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
@@ -163,7 +314,7 @@ export const StoryboardViewer: React.FC = () => {
       <div style={{ flex: 1, padding: 16, overflow: 'auto' }}>
         {/* Error banner */}
         {error && (
-          <div style={{ padding: '8px 12px', backgroundColor: '#3a1a1a', color: 'var(--color-error)', fontSize: 13, borderRadius: 4, marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ padding: '8px 12px', backgroundColor: 'var(--color-error-bg)', color: 'var(--color-error)', fontSize: 13, borderRadius: 4, marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>{error}</span>
             <button onClick={() => setError('')} style={{ background: 'none', border: 'none', color: 'var(--color-error)', cursor: 'pointer', fontSize: 14 }}>✕</button>
           </div>
@@ -249,9 +400,10 @@ export const StoryboardViewer: React.FC = () => {
             )}
           </>
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
-            {shots.length > 0 ? '选择左侧镜头查看详情' : '点击"AI 分镜拆解"开始生成分镜'}
-          </div>
+          <EmptyState
+            variant="panel"
+            title={shots.length > 0 ? '选择左侧镜头查看详情' : '点击"AI 分镜拆解"开始生成分镜'}
+          />
         )}
       </div>
     </div>

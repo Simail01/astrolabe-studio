@@ -3,15 +3,15 @@ import { useFanlibStore } from '../../stores/fanlib.store';
 import { useWorkspaceStore } from '../../stores/workspace.store';
 import { bridge } from '../../services/bridge';
 import type { CharacterCard, WorldviewCard, ItemCard, FactionCard } from '@astrolabe/shared';
+import { EmptyState } from '../ui/EmptyState';
 
-const container: React.CSSProperties = { padding: 16, color: '#ccc', height: '100%', overflow: 'auto' };
-const nameStyle: React.CSSProperties = { fontSize: 18, color: '#fff', marginBottom: 4 };
+const container: React.CSSProperties = { padding: 16, color: 'var(--text-primary)', height: '100%', overflow: 'auto' };
+const nameStyle: React.CSSProperties = { fontSize: 18, color: 'var(--text-inverse)', marginBottom: 4 };
 const field: React.CSSProperties = { marginBottom: 12 };
-const fieldLabel: React.CSSProperties = { fontSize: 12, color: '#999', marginBottom: 4 };
+const fieldLabel: React.CSSProperties = { fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 };
 const fieldValue: React.CSSProperties = { fontSize: 13 };
-const placeholder: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#666', fontSize: 14 };
-const tag: React.CSSProperties = { display: 'inline-block', padding: '2px 6px', margin: '0 4px 4px 0', backgroundColor: '#3c3c3c', borderRadius: 3, fontSize: 11, color: '#ccc' };
-const editInput: React.CSSProperties = { width: '100%', padding: '3px 6px', fontSize: 13, backgroundColor: '#3c3c3c', border: '1px solid #555', color: '#fff', borderRadius: 3, outline: 'none' };
+const tag: React.CSSProperties = { display: 'inline-block', padding: '2px 6px', margin: '0 4px 4px 0', backgroundColor: 'var(--bg-control)', borderRadius: 3, fontSize: 11, color: 'var(--text-primary)' };
+const editInput: React.CSSProperties = { width: '100%', padding: '3px 6px', fontSize: 13, backgroundColor: 'var(--bg-control)', border: '1px solid var(--border-input)', color: 'var(--text-inverse)', borderRadius: 3, outline: 'none' };
 
 export const FanlibCardEditor: React.FC = () => {
   const { cards, selectedCardId, removeCard } = useFanlibStore();
@@ -26,7 +26,7 @@ export const FanlibCardEditor: React.FC = () => {
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState('');
 
-  if (!card) return <div style={placeholder}>选择一张卡片查看详情</div>;
+  if (!card) return <EmptyState variant="panel" title="选择一张卡片查看详情" />;
 
   const handleGenerateImage = async () => {
     if (!workspace) { setGenError('未打开工作区'); return; }
@@ -40,7 +40,7 @@ export const FanlibCardEditor: React.FC = () => {
         ? `角色设定图，全身像，正面站立，白色背景，高细节，动漫风格。名称：${card.name}。外貌：${(card as CharacterCard).appearance || ''}。性格：${(card as CharacterCard).personality || ''}。服饰特征：${(card as CharacterCard).background || ''}`
         : `设定图，${card.name}`;
       const prompt = genPrompt || basePrompt;
-      const urls = await bridge.generateImage({ model, prompt, size: '2K' }) as string[];
+      const urls = await bridge.generateImage({ model, prompt, size: '2K', workspacePath: workspace?.path, stage: 'fanlib:generate' }) as string[];
       if (!urls || urls.length === 0) {
         setGenError('生成失败：AI 未返回图片');
         return;
@@ -100,8 +100,8 @@ export const FanlibCardEditor: React.FC = () => {
           <div style={field}><div style={fieldLabel}>背景</div><input value={editBackground} onChange={e => setEditBackground(e.target.value)} style={editInput} /></div>
         </>)}
         <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-          <button onClick={handleSave} style={{ padding: '4px 12px', fontSize: 12, backgroundColor: '#007acc', color: '#fff', border: 'none', borderRadius: 3, cursor: 'pointer' }}>保存</button>
-          <button onClick={() => setEditing(false)} style={{ padding: '4px 12px', fontSize: 12, backgroundColor: '#3c3c3c', color: '#ccc', border: 'none', borderRadius: 3, cursor: 'pointer' }}>取消</button>
+          <button onClick={handleSave} style={{ padding: '4px 12px', fontSize: 12, backgroundColor: 'var(--accent-blue)', color: 'var(--text-inverse)', border: 'none', borderRadius: 3, cursor: 'pointer' }}>保存</button>
+          <button onClick={() => setEditing(false)} style={{ padding: '4px 12px', fontSize: 12, backgroundColor: 'var(--bg-control)', color: 'var(--text-primary)', border: 'none', borderRadius: 3, cursor: 'pointer' }}>取消</button>
         </div>
       </div>
     );
@@ -112,8 +112,8 @@ export const FanlibCardEditor: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
         <div style={nameStyle}>{card.name}</div>
         <div style={{ display: 'flex', gap: 4 }}>
-          <button onClick={startEdit} style={{ padding: '2px 8px', fontSize: 11, backgroundColor: '#3c3c3c', color: '#ccc', border: 'none', borderRadius: 3, cursor: 'pointer' }}>编辑</button>
-          <button onClick={handleDelete} style={{ padding: '2px 8px', fontSize: 11, backgroundColor: '#5a1d1d', color: '#f44747', border: 'none', borderRadius: 3, cursor: 'pointer' }}>删除</button>
+          <button onClick={startEdit} style={{ padding: '2px 8px', fontSize: 11, backgroundColor: 'var(--bg-control)', color: 'var(--text-primary)', border: 'none', borderRadius: 3, cursor: 'pointer' }}>编辑</button>
+          <button onClick={handleDelete} style={{ padding: '2px 8px', fontSize: 11, backgroundColor: 'var(--color-error-bg)', color: 'var(--color-error-text)', border: 'none', borderRadius: 3, cursor: 'pointer' }}>删除</button>
         </div>
       </div>
 
@@ -167,7 +167,7 @@ export const FanlibCardEditor: React.FC = () => {
       )}
 
       {/* Design Images Section */}
-      <div style={{ ...field, borderTop: '1px solid #3c3c3c', paddingTop: 12 }}>
+      <div style={{ ...field, borderTop: '1px solid var(--bg-control)', paddingTop: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <div style={fieldLabel}>设定图</div>
         </div>
@@ -175,13 +175,13 @@ export const FanlibCardEditor: React.FC = () => {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {(card as any).designImages.map((url: string, i: number) => (
               <img key={i} src={url} alt={`${card.name} 设定图 ${i + 1}`}
-                style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 4, border: '1px solid #444' }}
+                style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--border-input)' }}
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
               />
             ))}
           </div>
         ) : (
-          <div style={{ color: '#666', fontSize: 12 }}>暂无设定图</div>
+          <EmptyState variant="inline" title="暂无设定图" />
         )}
         <div style={{ marginTop: 8 }}>
           <input
@@ -194,13 +194,13 @@ export const FanlibCardEditor: React.FC = () => {
             <button
               onClick={handleGenerateImage}
               disabled={generating}
-              style={{ padding: '4px 12px', fontSize: 12, backgroundColor: generating ? '#3c3c3c' : '#5a3e00', color: generating ? '#888' : '#dcdcaa', border: 'none', borderRadius: 3, cursor: generating ? 'not-allowed' : 'pointer' }}
+              style={{ padding: '4px 12px', fontSize: 12, backgroundColor: generating ? 'var(--bg-control)' : 'var(--color-warning-bg)', color: generating ? 'var(--text-tertiary)' : 'var(--color-warning-text)', border: 'none', borderRadius: 3, cursor: generating ? 'not-allowed' : 'pointer' }}
             >
               {generating ? '生成中...' : 'AI 生成设定图'}
             </button>
-            {genError && <span style={{ color: '#f44747', fontSize: 12 }}>{genError}</span>}
+            {genError && <span style={{ color: 'var(--color-error-text)', fontSize: 12 }}>{genError}</span>}
           </div>
-          <div style={{ color: '#666', fontSize: 10, marginTop: 4 }}>需在设置中配置火山方舟 API Key 和图像模型接入点</div>
+          <div style={{ color: 'var(--text-muted)', fontSize: 10, marginTop: 4 }}>需在设置中配置火山方舟 API Key 和图像模型接入点</div>
         </div>
       </div>
     </div>

@@ -9,4 +9,8 @@ export function registerProjectHandlers(): void {
   ipcMain.handle('project:create', (_event, projectPath: string, name: string) => {
     return projectService.createProject(projectPath, name);
   });
+
+  ipcMain.handle('project:delete', (_event, projectPath: string) => {
+    return projectService.deleteProject(projectPath);
+  });
 }

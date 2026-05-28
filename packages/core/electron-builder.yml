@@ -8,18 +8,25 @@ directories:
 files:
   - dist/**/*
   - node_modules/**/*
+  - from: "../ai"
+    to: "node_modules/@astrolabe/ai"
+    filter:
+      - "package.json"
+      - "dist/**/*"
   - "!node_modules/**/{test,tests,__tests__}/**"
   - "!node_modules/**/*.{md,ts,map}"
 
 extraResources:
   - from: "../ai/dist/prompts"
     to: "prompts"
+  - from: "resources/examples"
+    to: "examples"
 
 win:
   target:
     - target: nsis
       arch: [x64]
-  icon: null
+  icon: "../../build/icon.ico"
 
 nsis:
   oneClick: false
@@ -27,7 +34,16 @@ nsis:
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: 星盘工坊
+  installerIcon: "../../build/icon.ico"
+  uninstallerIcon: "../../build/icon.ico"
+  installerHeaderIcon: "../../build/icon.ico"
+  deleteAppDataOnUninstall: false
 
 asar: true
 asarUnpack:
   - "node_modules/chokidar/**/*"
+
+publish:
+  provider: github
+  owner: Simail01
+  repo: astrolabe-studio

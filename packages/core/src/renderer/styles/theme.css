@@ -3,6 +3,7 @@
   --bg-panel: #222325;
   --bg-input: #2a2b2e;
   --bg-hover: #2d2e30;
+  --bg-control: #3c3c3c;
 
   --border-subtle: #2d2d2d;
   --border-default: #3c3c3c;
@@ -20,6 +21,22 @@
   --color-warning: #b0a04a;
   --color-error: #b04a4a;
   --color-info: #6ba3c9;
+
+  --accent-blue: #007acc;
+  --accent-blue-dim: #094771;
+  --accent-blue-dark: #0e639c;
+  --text-tertiary: #888888;
+  --border-input: #555555;
+  --color-error-text: #f44747;
+  --color-error-bg: #5a1d1d;
+  --color-success-text: #4ec9b0;
+  --color-success-bg: #1d5a1d;
+  --color-warning-text: #dcdcaa;
+  --color-warning-bg: #5a3e00;
+  --editor-bg: #1e1e1e;
+  --editor-panel: #252526;
+  --color-danger: #cc5555;
+  --color-unsaved: #d4a72c;
 
   --font-body: 16px;
   --font-ui: 13px;

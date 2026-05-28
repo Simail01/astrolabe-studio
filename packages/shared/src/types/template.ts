@@ -9,7 +9,13 @@ export type TemplateStage =
   | 'wiki:consistency'
   | 'wiki:relations'
   | 'character:create'
-  | 'fanlib:adapt';
+  | 'fanlib:adapt'
+  | 'writing:rewrite'
+  | 'writing:polish'
+  | 'writing:expand'
+  | 'writing:compress'
+  | 'writing:enhance'
+  | 'writing:style';
 
 /** 模板变量声明 */
 export interface TemplateVariable {
@@ -44,4 +50,10 @@ export const TEMPLATE_STAGE_LABELS: Record<TemplateStage, string> = {
   'wiki:relations': '关系发现',
   'character:create': '角色创建',
   'fanlib:adapt': '同人适配',
+  'writing:rewrite': '文本改写',
+  'writing:polish': '文本润色',
+  'writing:expand': '文本扩写',
+  'writing:compress': '文本精简',
+  'writing:enhance': '情感增强',
+  'writing:style': '风格转换',
 };

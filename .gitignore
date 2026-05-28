@@ -14,9 +14,18 @@ release/
 
 # Temp files
 temp/
+.tmp/
 
 # Turbo
 .turbo/
+
+# Agent workspace files
+.agents/
+.codex/
+AGENTS.md
+task_plan.md
+progress.md
+findings.md
 
 # Claude Code
 .claude/

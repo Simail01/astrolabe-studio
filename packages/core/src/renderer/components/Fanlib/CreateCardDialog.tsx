@@ -9,20 +9,20 @@ const overlay: React.CSSProperties = {
   backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 200,
 };
 const dialog: React.CSSProperties = {
-  backgroundColor: '#252526', borderRadius: 8, padding: 24, width: 440, maxHeight: '80vh', overflow: 'auto', color: '#ccc', boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+  backgroundColor: 'var(--editor-panel)', borderRadius: 8, padding: 24, width: 440, maxHeight: '80vh', overflow: 'auto', color: 'var(--text-primary)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
 };
-const title: React.CSSProperties = { fontSize: 18, color: '#fff', marginBottom: 16 };
-const typeBar: React.CSSProperties = { display: 'flex', marginBottom: 16, borderBottom: '1px solid #3c3c3c' };
-const typeTab: React.CSSProperties = { padding: '6px 14px', fontSize: 13, cursor: 'pointer', color: '#999', borderBottom: '2px solid transparent' };
-const typeTabActive: React.CSSProperties = { ...typeTab, color: '#fff', borderBottomColor: '#007acc' };
+const title: React.CSSProperties = { fontSize: 18, color: 'var(--text-inverse)', marginBottom: 16 };
+const typeBar: React.CSSProperties = { display: 'flex', marginBottom: 16, borderBottom: '1px solid var(--bg-control)' };
+const typeTab: React.CSSProperties = { padding: '6px 14px', fontSize: 13, cursor: 'pointer', color: 'var(--text-secondary)', borderBottom: '2px solid transparent' };
+const typeTabActive: React.CSSProperties = { ...typeTab, color: 'var(--text-inverse)', borderBottomColor: 'var(--accent-blue)' };
 const field: React.CSSProperties = { marginBottom: 12 };
-const label: React.CSSProperties = { display: 'block', fontSize: 13, color: '#999', marginBottom: 4 };
-const input: React.CSSProperties = { width: '100%', padding: '6px 10px', fontSize: 14, backgroundColor: '#3c3c3c', border: '1px solid #555', color: '#fff', borderRadius: 4, outline: 'none' };
+const label: React.CSSProperties = { display: 'block', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 4 };
+const input: React.CSSProperties = { width: '100%', padding: '6px 10px', fontSize: 14, backgroundColor: 'var(--bg-control)', border: '1px solid var(--border-input)', color: 'var(--text-inverse)', borderRadius: 4, outline: 'none' };
 const textarea: React.CSSProperties = { ...input, resize: 'vertical', minHeight: 50, fontFamily: 'inherit' };
 const btnRow: React.CSSProperties = { display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 };
 const btn: React.CSSProperties = { padding: '8px 20px', fontSize: 13, borderRadius: 4, cursor: 'pointer', border: 'none' };
-const btnPrimary: React.CSSProperties = { ...btn, backgroundColor: '#007acc', color: '#fff' };
-const btnSecondary: React.CSSProperties = { ...btn, backgroundColor: '#3c3c3c', color: '#ccc' };
+const btnPrimary: React.CSSProperties = { ...btn, backgroundColor: 'var(--accent-blue)', color: 'var(--text-inverse)' };
+const btnSecondary: React.CSSProperties = { ...btn, backgroundColor: 'var(--bg-control)', color: 'var(--text-primary)' };
 
 const cardTypes: { key: FanlibCardType; label: string }[] = [
   { key: 'character', label: '人物' },
@@ -125,8 +125,8 @@ export const CreateCardDialog: React.FC<Props> = ({ onClose }) => {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
             {sourceTypes.map(st => (
               <button key={st.value} onClick={() => setSourceType(st.value)} style={{
-                padding: '3px 10px', fontSize: 12, borderRadius: 12, cursor: 'pointer', border: '1px solid #555',
-                backgroundColor: sourceType === st.value ? '#007acc' : 'transparent', color: sourceType === st.value ? '#fff' : '#999',
+                padding: '3px 10px', fontSize: 12, borderRadius: 12, cursor: 'pointer', border: '1px solid var(--border-input)',
+                backgroundColor: sourceType === st.value ? 'var(--accent-blue)' : 'transparent', color: sourceType === st.value ? 'var(--text-inverse)' : 'var(--text-secondary)',
               }}>{st.label}</button>
             ))}
           </div>

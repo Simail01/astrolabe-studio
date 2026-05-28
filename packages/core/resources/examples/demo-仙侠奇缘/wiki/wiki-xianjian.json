@@ -1,0 +1,19 @@
+{
+  "id": "wiki-xianjian",
+  "type": "item",
+  "title": "仙剑残片",
+  "aliases": ["断剑"],
+  "summary": "青石山北崖发现的仙剑残片，内封青玄残魂。",
+  "content": "这柄仙剑原为青玄的本命法宝，大战中崩碎。残片封印了青玄的残魂，沉睡千年。林远触碰后青玄苏醒，残片成为林远的修炼之基。",
+  "attributes": {
+    "来历": "青玄本命法宝残片",
+    "状态": "残破，封印残魂"
+  },
+  "relations": [
+    { "targetId": "wiki-qingxuan", "relationType": "封印", "description": "封印青玄残魂" },
+    { "targetId": "wiki-linyuan", "relationType": "持有者", "description": "林远发现并持有" }
+  ],
+  "sourceChapters": ["chapter-001"],
+  "confidence": "confirmed",
+  "confirmedByUser": true
+}

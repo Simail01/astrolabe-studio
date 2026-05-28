@@ -1,0 +1,22 @@
+{
+  "id": "wiki-suwanqing",
+  "type": "person",
+  "title": "苏婉清",
+  "summary": "天璇宗内门弟子，林远的师妹，性格温婉但内心坚韧。",
+  "content": "苏婉清是天璇宗长老苏明远的独女，自幼在宗门长大。她天赋出众，修炼速度远超同辈，却从不以此自傲。对林远这个外门弟子，她最初并不在意，后来被林远的坚韧和善良打动。",
+  "aliases": ["婉清", "苏师妹"],
+  "attributes": {
+    "年龄": "15",
+    "身份": "天璇宗内门弟子",
+    "修为": "练气六层",
+    "性格": "温婉、坚韧、善良",
+    "父亲": "苏明远（天璇宗长老）"
+  },
+  "relations": [
+    { "relationType": "同门", "targetId": "wiki-linyuan", "description": "林远的师妹" },
+    { "relationType": "父女", "targetId": "wiki-sumingyuan", "description": "苏明远之女" }
+  ],
+  "foreshadows": [],
+  "createdAt": "2026-05-26T00:00:00.000Z",
+  "updatedAt": "2026-05-26T00:00:00.000Z"
+}

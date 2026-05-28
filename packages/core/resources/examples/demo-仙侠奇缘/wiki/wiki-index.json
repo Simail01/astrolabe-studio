@@ -1,0 +1,12 @@
+{
+  "entries": [
+    { "id": "wiki-linyuan", "type": "person", "title": "林远" },
+    { "id": "wiki-qingxuan", "type": "person", "title": "青玄" },
+    { "id": "wiki-suwanqing", "type": "person", "title": "苏婉清" },
+    { "id": "wiki-linjiacun", "type": "location", "title": "林家村" },
+    { "id": "wiki-qingshishan", "type": "location", "title": "青石山" },
+    { "id": "wiki-heifenggu", "type": "location", "title": "黑风谷" },
+    { "id": "wiki-tianxuanzong", "type": "faction", "title": "天璇宗" },
+    { "id": "wiki-xianjian", "type": "item", "title": "仙剑残片" }
+  ]
+}

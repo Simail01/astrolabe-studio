@@ -1,270 +1,158 @@
-<div align="center">
+# 星盘工坊 Astrolabe Studio
 
-# Astrolabe Studio
+AI 赋能的小说、漫画、漫剧个人创作工作台。项目采用 Electron + React + TypeScript 构建，定位是本地优先的桌面创作 IDE：作品、章节、Wiki、分镜、漫画页等数据都以 JSON 文件保存在本地，便于备份、迁移和 Git 版本管理。
 
-**AI-Powered Desktop IDE for Novel / Comic / Motion Comic Creation**
+## 当前版本
 
-![Electron](https://img.shields.io/badge/Electron-30-47848F?style=flat&logo=electron&logoColor=white)
-![React](https://img.shields.io/badge/React-18-61DAFB?style=flat&logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=flat&logo=typescript&logoColor=white)
-![Zustand](https://img.shields.io/badge/Zustand-4.5-FF6B35?style=flat)
-![Vite](https://img.shields.io/badge/Vite-5.4-646CFF?style=flat&logo=vite&logoColor=white)
-![Vitest](https://img.shields.io/badge/Vitest-1.6-6E9F18?style=flat&logo=vitest&logoColor=white)
+- 版本：`0.8.0`
+- 阶段：Beta 分发版
+- 平台：Windows 桌面端
+- 安装包输出：`packages/core/release/星盘工坊 Setup 0.8.0.exe`
 
-[English](#features) | [中文](#特性概览)
+## 核心能力
 
-</div>
+- 小说创作闭环：工作区、作品、大纲、章节写作、自动保存、字数统计、章节状态管理。
+- AI 写作辅助：续写、改写、润色、扩写、精简、情感增强、风格转换。
+- Wiki / Story Bible：人物、地点、道具、事件、设定、伏笔管理，支持 AI 提取、充实、一致性检查和关系发现。
+- 长篇连续性：时间线视图、角色弧光、伏笔追踪、Prompt 运行记录。
+- 漫画 MVP：分镜拆解、镜头编辑、漫画页面管理、对白气泡、Webtoon 长条漫、HTML 长图导出。
+- 角色一致性：角色设定图、表情/姿态管理，生成时注入角色参考。
+- 分发能力：Windows NSIS 安装包、应用图标、GitHub publish 配置、electron-updater 集成。
 
----
+## 技术栈
 
-## What is Astrolabe Studio?
+| 层级 | 技术 |
+| --- | --- |
+| 桌面壳 | Electron 30 |
+| 渲染端 | React 18 + TypeScript + Vite |
+| 状态管理 | Zustand |
+| 主进程 | Node.js CommonJS + Electron IPC |
+| AI 文本 | DeepSeek |
+| AI 图像 | 火山方舟 / Volcengine Ark |
+| 存储 | 本地 JSON 文件 |
+| 测试 | Vitest |
+| Monorepo | pnpm workspace + Turborepo |
+| 打包 | electron-builder |
 
-A **full-stack Electron desktop IDE** that integrates AI capabilities into every stage of creative writing — from story outlining to comic page composition. Built as a **pnpm monorepo** with strict package boundary isolation, it features a custom IPC bridge architecture, multi-provider AI integration (DeepSeek text generation + Volcengine image generation), and a VS Code-style editor interface.
+## 项目结构
 
-> **Design Philosophy:** No database. All data is JSON files on disk, giving creators full Git-compatible version control over their work.
-
----
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                      Electron Shell (30)                        │
-├───────────────┬─────────────────────────┬───────────────────────┤
-│   Main (CJS)  │    Preload (Bridge)     │  Renderer (ESNext)    │
-│               │                         │                       │
-│  14 IPC       │   contextBridge         │  React 18 + Zustand   │
-│  handlers     │   window.astrolabe      │  10 stores            │
-│               │                         │  23 components        │
-│  9 services   │   invoke / on / send    │  Vite bundler         │
-│  (file I/O,   │   type-safe API         │                       │
-│   AI, wiki,   │                         │                       │
-│   pipeline)   │                         │                       │
-└───────────────┴─────────────────────────┴───────────────────────┘
-```
-
-### Monorepo Packages
-
-```
+```text
 packages/
-├── shared/     @astrolabe/shared   Pure type definitions (zero runtime)
-├── core/       @astrolabe/core     Electron main + React renderer + IPC
-└── ai/         @astrolabe/ai       DeepSeek + Volcengine API clients
+├── shared/     # @astrolabe/shared：类型定义
+├── ai/         # @astrolabe/ai：DeepSeek / Volcengine 客户端与 Prompt 模板
+└── core/       # @astrolabe/core：Electron 主进程、Preload、React 渲染端
+
+build/
+├── icon.svg
+└── icon.ico
 ```
 
-### Data Flow
+## 数据存储
 
-```
-React Component
-    → Zustand Store (optimistic update)
-        → bridge.invoke(channel, payload)
-            → contextBridge → IPC → Main Handler
-                → Service (file I/O / AI API)
-                    → Result flows back through IPC
-```
+星盘工坊不使用数据库。工作区内的数据以文件形式保存：
 
-### IPC Convention
-
-| Pattern | Usage | Example |
-|---------|-------|---------|
-| `invoke/handle` | Request-response | `fs:readFile`, `wiki:search` |
-| `on/send` | Server push (streaming) | `ai:text:chunk`, `fs:fileChanged` |
-
-Channel naming: `{domain}:{action}` — 14 registered handler modules in `ipc/index.ts`.
-
----
-
-## Features
-
-### 6 Subsystems
-
-| # | Subsystem | Status | Description |
-|---|-----------|--------|-------------|
-| 1 | Core IDE Framework | Done | Window management, VS Code-style layout, command palette, session recovery |
-| 2 | Wiki Knowledge Base | Done | CRUD for characters/locations/items/events, relationship graph, full-text search, AI context injection |
-| 3 | Fan Library | Done | Card-based management, alternate universe import, JSON export |
-| 4 | AI Creation Pipeline | Done | 6-stage state machine: Outline → Characters → Chapters → Storyboard → Comic → Motion Comic |
-| 5 | Character Consistency | Done | Design sheet versioning, expression/pose extension, fan library adaptation |
-| 6 | AI Integration Layer | Done | DeepSeek text/streaming, Volcengine image generation, KeyStore, PromptManager |
-
-### AI Capabilities
-
-- **Text Generation** — DeepSeek API with SSE streaming (`onChunk` / `onDone` / `onError` callbacks)
-- **Image Generation** — Volcengine (火山方舟) text-to-image and image-to-image
-- **Prompt Template System** — Customizable templates per pipeline stage, built-in + user-defined
-- **Wiki Auto-extract** — AI parses chapter content and extracts character/setting references
-- **Consistency Check** — AI cross-references wiki entries for contradictions
-
-### Editor Features
-
-- **Outline Editor** — Tree-structured story outline with AI-assisted generation
-- **Chapter Editor** — Rich text editing with AI continuation and style templates
-- **Storyboard Viewer** — Chapter → shot decomposition with AI-driven scene breakdown
-- **Comic Page Builder** — Grid-based canvas with shot library and panel generation
-- **Command Palette** — Keyboard-first navigation (Ctrl+P)
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Desktop Shell | Electron 30 |
-| UI Framework | React 18 + TypeScript 5.5 |
-| State Management | Zustand 4.5 (10 isolated stores) |
-| Build | Vite 5.4 (renderer) + tsc (main/preload) |
-| Testing | Vitest 1.6 |
-| Monorepo | pnpm 9 workspaces + Turborepo |
-| AI — Text | DeepSeek API (OpenAI-compatible, SSE streaming) |
-| AI — Image | Volcengine Ark API (火山方舟) |
-| File Watch | Chokidar 3.6 |
-| Storage | JSON files on disk (no database) |
-
----
-
-## Project Structure
-
-```
-packages/
-├── shared/src/types/
-│   ├── workspace.ts          # Workspace & session types
-│   ├── project.ts            # Project config (astrolabe.json)
-│   ├── pipeline.ts           # Outline, Chapter, Storyboard, PipelineState
-│   ├── wiki.ts               # Wiki entries (character/location/item/event/setting)
-│   ├── fanlib.ts             # Fan library card types
-│   ├── character-design.ts   # Character design sheet & expression/pose
-│   ├── plugin.ts             # Plugin system types
-│   └── template.ts           # Prompt template types
-│
-├── core/src/
-│   ├── main/
-│   │   ├── index.ts           # Electron entry point
-│   │   ├── window.ts          # BrowserWindow creation
-│   │   ├── services/          # 9 services (file, project, session, wiki, fanlib, pipeline, export, template, keystore)
-│   │   └── ipc/               # 14 IPC handler modules + registerAllHandlers()
-│   │
-│   └── renderer/
-│       ├── App.tsx            # Root component
-│       ├── services/bridge.ts # Type-safe IPC bridge (97 lines, 80+ methods)
-│       ├── stores/            # 10 Zustand stores
-│       ├── components/
-│       │   ├── Shell/         # GlobalNav, BottomBar, MenuBar
-│       │   ├── Pages/         # OutlinePage, WritingPage, ComicPage
-│       │   ├── Editor/        # ChapterEditor
-│       │   ├── Outline/       # OutlineEditor (tree structure)
-│       │   ├── Pipeline/      # StoryboardViewer
-│       │   ├── Wiki/          # WikiPanel
-│       │   ├── Fanlib/        # FanlibPanel, CreateCardDialog, ImportDialog
-│       │   ├── AI/            # AIBubble (floating AI assistant)
-│       │   ├── CommandPalette/# Command palette (Ctrl+P)
-│       │   ├── Explorer/      # File explorer sidebar
-│       │   ├── Settings/      # SettingsPanel, AISettings
-│       │   ├── Template/      # TemplateSelector, TemplateEditor
-│       │   ├── Workspace/     # WorkspaceDialog
-│       │   └── Project/       # CreateProjectDialog
-│       └── hooks/             # useKeyboard
-│
-└── ai/src/
-    ├── deepseek.ts            # DeepSeek client (generate + SSE streaming)
-    ├── volcengine.ts          # Volcengine client (text-to-image, image-to-image, ping)
-    ├── prompt-manager.ts      # Prompt template management
-    └── prompts/               # Built-in prompt templates
-```
-
----
-
-## Data Model
-
-All data stored as JSON files — one entity per file, Git-friendly:
-
-```
+```text
 {workspace}/
-├── fanlib/                        # Fan library (shared across projects)
-│   └── {type}/{id}.json
-│
+├── fanlib/
 └── {project}/
-    ├── astrolabe.json             # Project config
-    ├── pipeline-state.json        # Pipeline progress tracking
-    ├── outline/outline.json       # Story outline tree
-    ├── chapters/{id}.json         # Chapter content
-    ├── storyboards/{chapterId}.json # Shot-by-shot decomposition
-    ├── characters/{id}.json       # Character profiles
-    ├── characters/{id}/designs/   # Design sheet versions
-    ├── wiki/{type}/{id}.json      # Wiki entries
-    └── templates/{id}.json        # Custom prompt templates
+    ├── astrolabe.json
+    ├── outline/outline.json
+    ├── chapters/{id}.json
+    ├── wiki/{type}/{id}.json
+    ├── storyboards/{chapterId}.json
+    ├── comic/pages.json
+    ├── timeline.json
+    ├── character-arcs.json
+    └── templates/{id}.json
 ```
 
----
+## 开发环境
 
-## Quick Start
+要求：
 
-### Prerequisites
+- Node.js 18+
+- pnpm 9+
 
-- Node.js >= 18
-- pnpm >= 9
-
-### Install & Run
+安装依赖：
 
 ```bash
-# Clone
-git clone https://github.com/Simail01/astrolabe-studio.git
-cd astrolabe-studio
-
-# Install (skip Electron binary download for China network)
 pnpm install --ignore-scripts
+```
 
-# Development mode
+开发模式：
+
+```bash
 pnpm dev
+```
 
-# Build all packages
+构建：
+
+```bash
 pnpm build
+```
 
-# Run tests
+类型检查：
+
+```bash
+pnpm lint
+```
+
+测试：
+
+```bash
 pnpm test
+```
 
-# Package for Windows
+## Windows 打包
+
+```bash
 pnpm package:win
 ```
 
-Output: `packages/core/release/win-unpacked/星盘工坊.exe`
+输出文件：
 
-### First Launch
-
-1. Open the app
-2. Configure AI API Keys in Settings:
-   - **DeepSeek API Key** — for text generation (outline, writing, wiki extraction)
-   - **Volcengine API Key** — for image generation (storyboard, comic panels)
-
----
-
-## Testing
-
-```bash
-# All packages
-pnpm test
-
-# Single package
-cd packages/core && npx vitest run
-
-# Single file
-cd packages/core && npx vitest run __tests__/stores/layout.store.test.ts
+```text
+packages/core/release/星盘工坊 Setup 0.8.0.exe
 ```
 
-**Test coverage:** 12 test files covering stores (6), services (4), and bridge (1).
+打包说明：
 
----
+- `build/icon.ico` 是 Windows 安装包和应用图标资源，需要保留在仓库中。
+- 主进程运行时依赖需要能进入 `app.asar/node_modules`，根 `package.json` 已声明 `electron-store`、`chokidar`、`electron-updater`。
+- `@astrolabe/ai` 作为 workspace 包，会在 `electron-builder.yml` 中映射到 `node_modules/@astrolabe/ai`，保证安装包启动时能被 Node 模块解析。
+- `package:win` 使用固定的 electron-builder 物理路径，避免 Windows 下 pnpm peer 虚拟路径过长导致 NSIS include 失败。
 
-## Engineering Highlights
+## AI 配置
 
-- **Strict package boundaries** — `shared` has zero runtime deps; `core` never imports AI SDK directly
-- **Type-safe IPC** — `bridge.ts` wraps all 80+ IPC methods with TypeScript generics
-- **Streaming architecture** — SSE-based AI text streaming with chunk/done/error event model
-- **No database** — JSON files enable transparent data format and native Git version control
-- **Modular IPC** — 14 handler modules, each self-registering via `registerAllHandlers()`
-- **Store isolation** — 10 Zustand stores, each managing a single domain concern
-- **Prompt template system** — User-customizable AI prompts per pipeline stage, built-in defaults shipped as JSON
+首次启动会引导配置：
 
----
+- DeepSeek API Key：用于大纲生成、章节续写、文本改写、Wiki 提取等文本能力。
+- 火山方舟 API Key / 图像模型接入点：用于分镜图、漫画格、角色设定图等图像能力。
+
+API Key 保存在本机 KeyStore 中，不写入作品目录。
+
+## Git 忽略规则
+
+仓库会保留源码、配置、Prompt 模板、示例项目和构建资源。以下内容默认不入库：
+
+- `node_modules/`
+- `dist/`
+- `release/`
+- `.turbo/`
+- `.tmp/`
+- 本地 agent / Codex / Claude 工作文件
+- 产品规划和 review 过程文档
+
+## 常用命令
+
+```bash
+pnpm install --ignore-scripts
+pnpm dev
+pnpm build
+pnpm lint
+pnpm test
+pnpm package:win
+```
 
 ## License
 

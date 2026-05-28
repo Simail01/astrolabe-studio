@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron';
 import { fileService } from '../services/file.service';
 import { sessionService } from '../services/session.service';
+import { seedExampleProject } from '../services/example.service';
 import path from 'path';
 import type { Workspace } from '@astrolabe/shared';
 import { randomUUID } from 'crypto';
@@ -72,6 +73,11 @@ export function registerWorkspaceHandlers(): void {
     });
 
     return workspace;
+  });
+
+  ipcMain.handle('workspace:seedExample', async (_event, workspacePath: string) => {
+    const name = seedExampleProject(workspacePath);
+    return name;
   });
 
   ipcMain.handle('workspace:getLast', async () => {

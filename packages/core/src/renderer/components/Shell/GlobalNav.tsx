@@ -2,8 +2,8 @@ import React from 'react';
 import { MenuBar } from './MenuBar';
 
 export type AppMode = 'create' | 'visualize' | 'perform';
-export type CreateStage = 'outline' | 'writing';
-export type VisualizeStage = 'storyboard' | 'comic';
+export type CreateStage = 'dashboard' | 'outline' | 'writing' | 'timeline' | 'arc';
+export type VisualizeStage = 'storyboard' | 'comic' | 'preview';
 
 interface Props {
   mode: AppMode;
@@ -21,13 +21,17 @@ const modes: { key: AppMode; label: string }[] = [
 ];
 
 const createStages: { key: CreateStage; label: string }[] = [
+  { key: 'dashboard', label: '驾驶舱' },
   { key: 'outline', label: '大纲' },
   { key: 'writing', label: '写作' },
+  { key: 'timeline', label: '时间线' },
+  { key: 'arc', label: '角色弧光' },
 ];
 
 const visualizeStages: { key: VisualizeStage; label: string }[] = [
   { key: 'storyboard', label: '分镜' },
   { key: 'comic', label: '漫画' },
+  { key: 'preview', label: '画廊' },
 ];
 
 export const GlobalNav: React.FC<Props> = ({ mode, onModeChange, stage, onStageChange, vizStage, onVizStageChange }) => (

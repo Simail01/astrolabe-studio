@@ -8,23 +8,23 @@ const overlay: React.CSSProperties = {
   display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000,
 };
 const dialog: React.CSSProperties = {
-  width: 480, maxHeight: '80vh', overflow: 'auto', backgroundColor: '#252526', borderRadius: 8,
-  padding: 24, boxShadow: '0 8px 32px rgba(0,0,0,0.5)', color: '#ccc',
+  width: 480, maxHeight: '80vh', overflow: 'auto', backgroundColor: 'var(--bg-panel)', borderRadius: 8,
+  padding: 24, boxShadow: '0 8px 32px rgba(0,0,0,0.5)', color: 'var(--text-primary)',
 };
-const title: React.CSSProperties = { fontSize: 18, color: '#fff', marginBottom: 12 };
-const subtitle: React.CSSProperties = { fontSize: 13, color: '#999', marginBottom: 16 };
+const title: React.CSSProperties = { fontSize: 18, color: 'var(--text-inverse)', marginBottom: 12 };
+const subtitle: React.CSSProperties = { fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 };
 const btn: React.CSSProperties = { padding: '6px 16px', fontSize: 13, border: 'none', borderRadius: 4, cursor: 'pointer', marginRight: 8 };
-const btnPrimary: React.CSSProperties = { ...btn, backgroundColor: '#007acc', color: '#fff' };
-const btnSecondary: React.CSSProperties = { ...btn, backgroundColor: '#3c3c3c', color: '#ccc' };
-const btnAi: React.CSSProperties = { ...btn, backgroundColor: '#5a3e00', color: '#dcdcaa' };
+const btnPrimary: React.CSSProperties = { ...btn, backgroundColor: 'var(--accent-blue)', color: 'var(--text-inverse)' };
+const btnSecondary: React.CSSProperties = { ...btn, backgroundColor: 'var(--bg-control)', color: 'var(--text-primary)' };
+const btnAi: React.CSSProperties = { ...btn, backgroundColor: 'var(--color-warning-bg)', color: 'var(--color-warning-text)' };
 const adaptItem: React.CSSProperties = {
-  padding: '8px 12px', marginBottom: 6, backgroundColor: '#2d2d2d', borderRadius: 4, fontSize: 13,
+  padding: '8px 12px', marginBottom: 6, backgroundColor: 'var(--bg-panel)', borderRadius: 4, fontSize: 13,
 };
-const adaptField: React.CSSProperties = { color: '#dcdcaa', fontSize: 12, marginBottom: 2 };
-const adaptChange: React.CSSProperties = { color: '#ccc', fontSize: 13, marginBottom: 2 };
-const adaptReason: React.CSSProperties = { color: '#888', fontSize: 11, fontStyle: 'italic' };
+const adaptField: React.CSSProperties = { color: 'var(--color-warning-text)', fontSize: 12, marginBottom: 2 };
+const adaptChange: React.CSSProperties = { color: 'var(--text-primary)', fontSize: 13, marginBottom: 2 };
+const adaptReason: React.CSSProperties = { color: 'var(--text-tertiary)', fontSize: 11, fontStyle: 'italic' };
 const loadingBar: React.CSSProperties = {
-  padding: '10px 16px', backgroundColor: '#094771', color: '#fff', fontSize: 13,
+  padding: '10px 16px', backgroundColor: 'var(--accent-blue-dim)', color: 'var(--text-inverse)', fontSize: 13,
   display: 'flex', alignItems: 'center', gap: 8, borderRadius: 4, marginBottom: 12,
 };
 
@@ -121,12 +121,12 @@ export const ImportDialog: React.FC = () => {
         </div>
 
         {error && (
-          <div style={{ ...loadingBar, backgroundColor: '#5a1d1d', color: '#f44747' }}>
+          <div style={{ ...loadingBar, backgroundColor: 'var(--color-error-bg)', color: 'var(--color-error-text)' }}>
             ✗ {error}
           </div>
         )}
         {!projectPath && !error && (
-          <div style={{ ...loadingBar, backgroundColor: '#5a1d1d' }}>
+          <div style={{ ...loadingBar, backgroundColor: 'var(--color-error-bg)' }}>
             请先在左侧 Explorer 中选择一个作品
           </div>
         )}
@@ -139,16 +139,16 @@ export const ImportDialog: React.FC = () => {
 
         {adaptations && (
           <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 14, color: '#4ec9b0', marginBottom: 8, fontWeight: 600 }}>
+            <div style={{ fontSize: 14, color: 'var(--color-success-text)', marginBottom: 8, fontWeight: 600 }}>
               AI 平行宇宙改编建议
             </div>
             {adaptations.map((a, i) => (
               <div key={i} style={adaptItem}>
                 <div style={adaptField}>{a.field}</div>
                 <div style={adaptChange}>
-                  <span style={{ color: '#888', textDecoration: 'line-through' }}>{a.original}</span>
+                  <span style={{ color: 'var(--text-tertiary)', textDecoration: 'line-through' }}>{a.original}</span>
                   {' → '}
-                  <span style={{ color: '#4ec9b0' }}>{adaptedAttrs[a.field] || a.adapted}</span>
+                  <span style={{ color: 'var(--color-success-text)' }}>{adaptedAttrs[a.field] || a.adapted}</span>
                 </div>
                 <div style={adaptReason}>{a.reason}</div>
               </div>

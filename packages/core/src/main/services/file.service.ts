@@ -36,4 +36,8 @@ export const fileService = {
     const mime = ext === 'jpg' ? 'image/jpeg' : `image/${ext || 'png'}`;
     return `data:${mime};base64,${data.toString('base64')}`;
   },
+
+  rename(oldPath: string, newPath: string): void {
+    fs.renameSync(oldPath, newPath);
+  },
 };

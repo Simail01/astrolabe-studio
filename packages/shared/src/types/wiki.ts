@@ -1,4 +1,4 @@
-export type WikiEntryType = 'person' | 'location' | 'faction' | 'item' | 'event' | 'rule';
+export type WikiEntryType = 'person' | 'location' | 'faction' | 'item' | 'event' | 'rule' | 'foreshadow';
 
 export interface WikiEntry {
   id: string;

@@ -1,0 +1,20 @@
+{
+  "id": "wiki-linyuan",
+  "type": "person",
+  "title": "林远",
+  "aliases": [],
+  "summary": "林家村采药少年，偶得仙剑残片后踏上修仙之路。",
+  "content": "林远自幼父母双亡，靠村中长辈接济长大。性格坚韧善良，对修仙世界充满向往。根骨尚可，被青玄收为弟子。",
+  "attributes": {
+    "年龄": "16",
+    "身份": "采药少年/修仙新人",
+    "修为": "引气入体"
+  },
+  "relations": [
+    { "targetId": "wiki-qingxuan", "relationType": "师徒", "description": "青玄指导林远修仙" },
+    { "targetId": "wiki-linjiacun", "relationType": "居住地", "description": "林远生长的山村" }
+  ],
+  "sourceChapters": ["chapter-001", "chapter-002"],
+  "confidence": "confirmed",
+  "confirmedByUser": true
+}

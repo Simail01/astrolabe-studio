@@ -121,7 +121,42 @@ export function registerWikiHandlers(): void {
 
     const jsonMatch = raw.match(/\[[\s\S]*\]/);
     if (!jsonMatch) throw new Error('AI 未返回有效的 JSON');
-    return JSON.parse(jsonMatch[0]);
+    const results = JSON.parse(jsonMatch[0]);
+
+    // Foreshadow unrecovered detection
+    const foreshadowEntries = wikiService.listEntries(projectPath, 'foreshadow');
+    if (foreshadowEntries.length > 0) {
+      const timelinePath = path.join(projectPath, 'timeline.json');
+      let timelineEvents: { title?: string; description?: string; relatedEntries?: string[] }[] = [];
+      if (fileService.exists(timelinePath)) {
+        const timelineData = JSON.parse(fileService.readFile(timelinePath));
+        timelineEvents = timelineData.events || [];
+      }
+
+      for (const fsEntry of foreshadowEntries) {
+        const matched = timelineEvents.some(ev => {
+          const title = (ev.title || '').toLowerCase();
+          const desc = (ev.description || '').toLowerCase();
+          const related = ev.relatedEntries || [];
+          const entryTitle = fsEntry.title.toLowerCase();
+          return title.includes(entryTitle) || desc.includes(entryTitle) || related.some(r => r.toLowerCase().includes(entryTitle));
+        });
+        if (!matched) {
+          results.push({
+            entryTitle: fsEntry.title,
+            field: '伏笔回收',
+            valueA: '已埋设',
+            chapterA: '',
+            valueB: '未发现回收事件',
+            chapterB: '',
+            severity: 'warning',
+            suggestion: '该伏笔在时间线中未找到回收事件，建议在后续章节中处理',
+          });
+        }
+      }
+    }
+
+    return results;
   });
 
   // P3: Relation discovery

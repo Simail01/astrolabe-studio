@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { bridge } from '../../services/bridge';
+import { toast } from '../../stores/toast.store';
 
 const container: React.CSSProperties = {
   padding: '24px 20px',
-  color: '#cccccc',
+  color: 'var(--text-primary)',
   overflow: 'auto',
   flex: 1,
 };
@@ -11,13 +12,13 @@ const container: React.CSSProperties = {
 const section: React.CSSProperties = {
   marginBottom: 24,
   padding: 16,
-  backgroundColor: '#2d2d2d',
+  backgroundColor: 'var(--bg-hover)',
   borderRadius: 6,
 };
 
 const sectionTitle: React.CSSProperties = {
   fontSize: 15,
-  color: '#fff',
+  color: 'var(--text-inverse)',
   marginBottom: 12,
   fontWeight: 600,
 };
@@ -30,7 +31,7 @@ const label: React.CSSProperties = {
   display: 'block',
   fontSize: 13,
   marginBottom: 4,
-  color: '#999',
+  color: 'var(--text-secondary)',
 };
 
 const input: React.CSSProperties = {
@@ -38,9 +39,9 @@ const input: React.CSSProperties = {
   maxWidth: 420,
   padding: '6px 10px',
   fontSize: 14,
-  backgroundColor: '#3c3c3c',
-  border: '1px solid #555',
-  color: '#ffffff',
+  backgroundColor: 'var(--bg-input)',
+  border: '1px solid var(--border-input)',
+  color: 'var(--text-inverse)',
   borderRadius: 4,
   outline: 'none',
 };
@@ -55,8 +56,8 @@ const btnRow: React.CSSProperties = {
 const btn: React.CSSProperties = {
   padding: '6px 16px',
   fontSize: 13,
-  backgroundColor: '#007acc',
-  color: '#ffffff',
+  backgroundColor: 'var(--accent)',
+  color: 'var(--text-inverse)',
   border: 'none',
   borderRadius: 4,
   cursor: 'pointer',
@@ -64,22 +65,22 @@ const btn: React.CSSProperties = {
 
 const btnSecondary: React.CSSProperties = {
   ...btn,
-  backgroundColor: '#3c3c3c',
+  backgroundColor: 'var(--bg-input)',
 };
 
 const statusOk: React.CSSProperties = {
-  color: '#4ec9b0',
+  color: 'var(--color-success-text)',
   fontSize: 12,
 };
 
 const statusFail: React.CSSProperties = {
-  color: '#f44747',
+  color: 'var(--color-error-text)',
   fontSize: 12,
 };
 
 const hint: React.CSSProperties = {
   fontSize: 11,
-  color: '#666',
+  color: 'var(--text-muted)',
   marginTop: 4,
 };
 
@@ -120,10 +121,13 @@ export const AISettings: React.FC<Props> = ({ onSaved }) => {
     if (deepseekBaseUrl) saves.push(bridge.setAIKey('deepseek-baseurl', deepseekBaseUrl));
     Promise.all(saves).then(() => {
       setShowSaved(true);
+      toast.success('配置已保存');
       onSaved?.();
       setTimeout(() => setShowSaved(false), 2000);
     }).catch((e) => {
-      setSaveError('保存失败: ' + (e as Error).message);
+      const msg = '保存失败: ' + (e as Error).message;
+      setSaveError(msg);
+      toast.error(msg);
     });
   };
 
@@ -160,7 +164,7 @@ export const AISettings: React.FC<Props> = ({ onSaved }) => {
 
   return (
     <div style={container}>
-      <h2 style={{ fontSize: 18, marginBottom: 20, color: '#fff' }}>模型 API 配置</h2>
+      <h2 style={{ fontSize: 18, marginBottom: 20, color: 'var(--text-inverse)' }}>模型 API 配置</h2>
 
       {/* DeepSeek */}
       <div style={section}>

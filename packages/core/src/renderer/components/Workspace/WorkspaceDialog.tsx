@@ -1,6 +1,8 @@
 import React from 'react';
 import { useWorkspaceStore } from '../../stores/workspace.store';
 import { bridge } from '../../services/bridge';
+import { Button } from '../ui/Button';
+import { toast } from '../../stores/toast.store';
 import type { Workspace } from '@astrolabe/shared';
 
 const overlay: React.CSSProperties = {
@@ -37,12 +39,35 @@ export const WorkspaceDialog: React.FC = () => {
     setWorkspace(ws);
   };
 
+  const handleSeedExample = async () => {
+    const folder = await bridge.selectFolder();
+    if (!folder) return;
+    try {
+      const ws = await bridge.openWorkspace(folder) as Workspace;
+      if (ws.projects.length === 0) {
+        const name = await bridge.seedExample(folder);
+        if (name) {
+          const updated = await bridge.openWorkspace(folder) as Workspace;
+          setWorkspace(updated);
+          toast.success('示例项目已加载');
+          return;
+        }
+      }
+      setWorkspace(ws);
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : '加载示例失败');
+    }
+  };
+
   return (
     <div style={overlay}>
       <div style={card}>
         <div style={title}>星盘工坊</div>
         <div style={subtitle}>打开工作区开始创作</div>
-        <button style={btnPrimary} onClick={handleOpen}>打开文件夹</button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+          <Button variant="primary" size="lg" onClick={handleOpen}>打开文件夹</Button>
+          <Button variant="ghost" size="md" onClick={handleSeedExample}>体验示例项目</Button>
+        </div>
         <div style={{ marginTop: 16, fontSize: 12, color: 'var(--text-muted)' }}>
           选择一个文件夹作为工作区，所有作品将保存在此
         </div>
